@@ -43,4 +43,5 @@ tensorflow-tensorboard==1.5.0
 tox==2.9.1
 virtualenv==15.1.0
 Werkzeug==0.14.1
-git+https://github.com/fizyr/keras-retinanet.git
+git+https://github.com/broadinstitute/keras-resnet
+git+https://github.com/IvanBrasilico/keras-retinanet.git

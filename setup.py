@@ -16,6 +16,7 @@ setup(
         'h5py',
         'imutils',
         'numpy',
+        'opencv-python',
         'Pillow',
         'redis',
         'scipy',
@@ -23,10 +24,9 @@ setup(
         'tensorflow',
     ],
     dependency_links=[
-        'git+https://github.com/IvanBrasilico/keras-resnet.git',
-        'git+https://github.com/fizyr/keras-retinanet.git'
+        'git+https://github.com/broadinstitute/keras-resnet',
+        'git+https://github.com/IvanBrasilico/keras-retinanet.git'
     ],
-    setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     test_suite="tests",
     package_data={

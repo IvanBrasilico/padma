@@ -32,11 +32,11 @@ class TestModel(unittest.TestCase):
         preds = self.retina.predict(self.image)
         print(preds)
         print(preds)
-        assert preds[1] == 'cc'
-        assert abs(preds[0][0] - 227) < 4
-        assert abs(preds[0][1] - 28) < 4
-        assert abs(preds[0][2] - 472) < 4
-        assert abs(preds[0][3] - 206) < 4
+        assert 'cc' in preds[0][1]
+        assert abs(preds[0][0][0] - 227) < 10
+        assert abs(preds[0][0][1] - 28) < 10
+        assert abs(preds[0][0][2] - 472) < 10
+        assert abs(preds[0][0][3] - 206) < 10
 
 
 if __name__ == '__main__':

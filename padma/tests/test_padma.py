@@ -21,6 +21,7 @@ class FlaskTestCase(unittest.TestCase):
         self.app = app.test_client()
 
     def tearDown(self):
+        """Limpa o ambiente"""
         pass
 
     def test_prediction_ResNet(self):
