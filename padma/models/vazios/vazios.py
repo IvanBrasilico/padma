@@ -4,7 +4,6 @@ import pickle
 
 import numpy as np
 from scipy import misc
-
 from sklearn.ensemble import RandomForestClassifier
 
 
@@ -13,10 +12,10 @@ class VazioModel():
         self._bins = bins
         histograms = pickle.load(
             open(os.path.join(os.path.dirname(__file__),
-                              'histograms.pkl'), "rb"))
+                              'histograms.pkl'), 'rb'))
         labels = pickle.load(
             open(os.path.join(os.path.dirname(__file__),
-                              'labels.pkl'), "rb"))
+                              'labels.pkl'), 'rb'))
         self.clf = RandomForestClassifier()
         self.clf.fit(histograms, labels)
 
@@ -32,10 +31,10 @@ class VazioModel():
     def vaziooucheiodescritivo(self, file=None, image=None):
         teste = self.vaziooucheio(file=file, image=image)
         if teste[0][0] > 0.5:
-            return "Contêiner avaliado como VAZIO"
+            return 'Contêiner avaliado como VAZIO'
         else:
-            return "Contêiner avaliado como NÃO VAZIO"
-    
+            return 'Contêiner avaliado como NÃO VAZIO'
+
     def predict(self, image):
         probs = self.vaziooucheio(image=image)
         result = []

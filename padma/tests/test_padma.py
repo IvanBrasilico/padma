@@ -8,6 +8,7 @@ from threading import Thread
 from padma.app import app, classify_process
 
 TEST_IMAGE = os.path.join(os.path.dirname(__file__), 'test.png')
+CHEIO_IMAGE = os.path.join(os.path.dirname(__file__), 'cheio.jpg')
 
 
 class FlaskTestCase(unittest.TestCase):
@@ -23,11 +24,12 @@ class FlaskTestCase(unittest.TestCase):
         pass
 
     def test_prediction_ResNet(self):
-        image = open(TEST_IMAGE, "rb").read()
+        image = open(TEST_IMAGE, 'rb').read()
         data = {}
         data['image'] = (BytesIO(image), 'image')
         rv = self.app.post(
-            '/predict?model=resnet', content_type='multipart/form-data', data=data)
+            '/predict?model=resnet',
+            content_type='multipart/form-data', data=data)
         test_dict = json.loads(rv.data.decode())
         assert test_dict.get('success') is not None
         assert test_dict.get('success') is True
@@ -35,11 +37,12 @@ class FlaskTestCase(unittest.TestCase):
         assert b'beagle' in rv.data
 
     def test_prediction_Vazios(self):
-        image = open(TEST_IMAGE, "rb").read()
+        image = open(TEST_IMAGE, 'rb').read()
         data = {}
         data['image'] = (BytesIO(image), 'image')
         rv = self.app.post(
-            '/predict?model=vazios', content_type='multipart/form-data', data=data)
+            '/predict?model=vazios',
+            content_type='multipart/form-data', data=data)
         test_dict = json.loads(rv.data.decode())
         assert test_dict.get('success') is not None
         assert test_dict.get('success') is True

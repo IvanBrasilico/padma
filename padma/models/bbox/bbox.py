@@ -21,7 +21,8 @@ class RetinaModel():
 
     def predict(self, image):
         import numpy as np
-        from keras_retinanet.utils.image import read_image_bgr, preprocess_image, resize_image
+        from keras_retinanet.utils.image import (
+            preprocess_image, resize_image)
         image = preprocess_image(image)
         image, scale = resize_image(image)
         _, _, detections = self._model.predict_on_batch(
@@ -37,7 +38,7 @@ class RetinaModel():
             if score < 0.5:
                 continue
             b = detections[0, idx, :4].astype(int)
-            caption = "{} {:.3f}".format(self._labels_to_names[label], score)
+            caption = '{} {:.3f}'.format(self._labels_to_names[label], score)
             result.append((b, caption))
         return result
 
@@ -46,8 +47,10 @@ def find_conteiner(afile):
     """Heuristic dumb walk algorithm
     Beginning on middle of top, left, right and bottom sizes,
     do a 'walk till find wall(gray>230)'.
-    Besides simplicity, works well to find conteiner boundaries on majority of cases,
-    so is a beggining and can acelerate anottations for training better algorithm
+    Besides simplicity, works well to find conteiner boundaries
+    on majority of cases,
+    so is a beggining and can acelerate anottations for training
+    better algorithm
 
     Args:
 
@@ -79,7 +82,8 @@ def find_conteiner(afile):
         if (im[yteto+5, r] < 215):
             xdireita = r
             break
-    # Achar o piso do contêiner é bem mais difícil... Pensar em como fazer depois Talvez o ponto de max valores
+    # Achar o piso do contêiner é bem mais difícil...
+    # Pensar em como fazer depois Talvez o ponto de max valores
     imbaixo = im[ymeio:yfinal, xesquerda:xdireita]
     ychao = imbaixo.sum(axis=1).argmin()
     ychao = ychao + ymeio + 10

@@ -13,8 +13,8 @@ import flask
 import redis
 from PIL import Image
 
+from padma.models.models import Naive, ResNet, Vazios  # , Retina
 from padma.utils import base64_decode_image, base64_encode_image, prepare_image
-from padma.models.models import Naive, Retina, ResNet, Vazios 
 
 # initialize constants used to control image spatial dimensions and
 # data type

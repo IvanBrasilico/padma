@@ -6,8 +6,8 @@ from PIL import Image
 
 from padma.models.vazios.vazios import VazioModel
 
-VAZIO_IMAGE = os.path.join(os.path.dirname(__file__), 'test.png')
-CHEIO_IMAGE = os.path.join(os.path.dirname(__file__), 'test.png')
+VAZIO_IMAGE = os.path.join(os.path.dirname(__file__), 'vazio.jpg')
+CHEIO_IMAGE = os.path.join(os.path.dirname(__file__), 'cheio.jpg')
 
 
 class TestModel(unittest.TestCase):
@@ -45,7 +45,6 @@ class TestModel(unittest.TestCase):
 
     def test_descritivo(self):
         desc = self.model.vaziooucheiodescritivo(image=self.cheio)
-        assert "NÃO" in desc
+        assert 'NÃO' in desc
         desc = self.model.vaziooucheiodescritivo(image=self.vazio)
-        assert "NÃO" not in desc
- 
+        assert 'NÃO' not in desc
