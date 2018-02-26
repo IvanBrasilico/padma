@@ -1,0 +1,63 @@
+{% extends "layout.html" %} {% block content %}{{super()}}
+<div id="main" class="container-fluid">
+    <div id="top" class="row">
+        <form method="POST" action="/files">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="row">
+                <div class="col-sm-3">
+                    <label for="numero">Número do contêiner</label>
+                </div>
+                <div class="col-sm-6">
+                    <label for="date">Período da importação da imagem</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-sm-3">
+                        <input class="form-control" type="text" name="numero" value="{{oform.numero.data}}" />
+                    </div>
+                    <div class="col-sm-3">
+                        <input class="form-control" type="date" name="start" value="{{oform.start.data}}" />
+                    </div>
+                    <div class="col-sm-3">
+                        <input class="form-control" type="date" name="end" value="{{oform.end.data}}" />
+                    </div>
+                    <div class="col-sm-3">
+                        <input class="btn btn-default" type="submit" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="list" class="row">
+        <div class="table table-responsive col-sm-12">
+            {# Display a page of todos #}
+            <table class="inlineTable table table-striped table-bordered table-hover table-condensed table-responsive">
+                <thead>
+                    <tr>
+                        <td>Número informado do Contêiner</td>
+                        <td>Nome do Arquivo</td>
+                        <td>Data de Upload</td>
+                    </tr>
+                </thead>
+                {% for myfile in paginated_files %}
+                <tr>
+                    <td>{{ myfile['numero'] }}</td>
+                    <td>{{ myfile['filename'] }}</td>
+                    <td>{{ myfile['upload_date'] }}</td>
+                    <td>
+                        <a href="/file/{{ myfile['_id'] }}" target="_BLANK">Ver</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div id="bottom" class="row">
+        AJNA - Receita Federal do Brasil 2017
+    </div>
+</div>
+<!-- /#main -->
+{% endblock %} {% block scripts %} {{super()}}
+<script type="text/javascript">
+</script> {% endblock %}

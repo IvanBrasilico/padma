@@ -11,6 +11,10 @@ setup(
     packages=find_packages(),
     install_requires=[
         'Flask',
+        'flask_bootstrap',
+        'flask_login',
+        'flask_nav',
+        'flask_wtf',
         'gevent',
         'keras',
         'h5py',

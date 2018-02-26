@@ -24,7 +24,7 @@ class FlaskTestCase(unittest.TestCase):
         """Limpa o ambiente"""
         pass
 
-    def test_prediction_ResNet(self):
+    """def test_prediction_ResNet(self):
         image = open(TEST_IMAGE, 'rb').read()
         data = {}
         data['image'] = (BytesIO(image), 'image')
@@ -36,7 +36,7 @@ class FlaskTestCase(unittest.TestCase):
         assert test_dict.get('success') is True
         assert test_dict.get('predictions')[0].get('label') == 'beagle'
         assert b'beagle' in rv.data
-
+    """
     def test_prediction_Vazios(self):
         image = open(TEST_IMAGE, 'rb').read()
         data = {}

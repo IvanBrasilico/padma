@@ -19,6 +19,10 @@ class ModelBase():
         return preds
 
 
+class Pong(ModelBase):
+    def predict(self):
+        return 'Pong'
+
 class ResNet(ModelBase):
     def __init__(self, weights='imagenet'):
         self._model = ResNet50(weights=weights)
