@@ -61,7 +61,9 @@ def find_conteiner(afile):
     xleft, ytop, xright, ybottom
 
     """
-    im = afile[:, :, 0]
+    print(afile.shape)
+    im = afile[0, :, :, 0]
+    print(im.shape)
     yfinal, xfinal = im.shape
     ymeio = round(yfinal / 2)
     xmeio = round(xfinal / 2)
@@ -95,7 +97,7 @@ def find_conteiner(afile):
         xesquerda = 5
     if (yteto == ymeio):
         yteto = 5
-    return xesquerda, yteto, xdireita, ychao
+    return int(xesquerda), int(yteto), int(xdireita), int(ychao)
 
 
 class NaiveModel():
@@ -104,4 +106,4 @@ class NaiveModel():
         # from image_aq.utils.image_functions import find_conteiner
         # Code copied from this file because of path problems
         # TODO: allow padma submodule import things from AJNA_MOD
-        return((find_conteiner(image), 'cc'))
+        return {'bbox': find_conteiner(image), 'class': 'cc'}

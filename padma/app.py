@@ -10,7 +10,8 @@ import time
 import uuid
 from threading import Thread
 
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import (Flask, flash, jsonify, redirect, render_template,
+                   request, url_for)
 import redis
 from PIL import Image
 
@@ -22,6 +23,7 @@ from flask_wtf.csrf import CSRFProtect
 
 from ajna_commons.flask.conf import (SECRET, BSON_REDIS, DATABASE, MONGODB_URI,
                                      TIMEOUT, redisdb)
+from ajna_commons.flask.log import logger
 
 from padma.models.models import Naive, Pong, Vazios
 from padma.utils import base64_decode_image, base64_encode_image, prepare_image
@@ -35,7 +37,7 @@ IMAGE_DTYPE = 'float32'
 
 # initialize constants used for server queuing
 BATCH_SIZE = 10
-SERVER_SLEEP = 0.20
+SERVER_SLEEP = 0.10
 CLIENT_SLEEP = 0.10
 
 
@@ -93,7 +95,7 @@ def logout():
 def allowed_file(filename):
     """Check allowed extensions"""
     return '.' in filename and \
-        filename.rsplit('.', 1)[-1].lower() in ['bson']
+        filename.rsplit('.', 1)[-1].lower() in ['jpg']
 
 
 @app.route('/')
@@ -114,7 +116,7 @@ def classify_process():
     print('* Loading model PONG (ping-pong test if alive) *')
     modeldict['ping'] = Pong()
     print('* Loading model Vazios...')
-    modeldict['vazios'] = Vazios()
+    modeldict['vazio'] = Vazios()
     print('* Model vazios loaded')
     # print('* Loading model Retina BBox...')
     # modeldict['retina'] = Retina()
@@ -130,23 +132,25 @@ def classify_process():
             queue = redisdb.lrange(model_name, 0, BATCH_SIZE - 1)
             # loop over the queue
             if queue:
-                s0 = time.time()
-                cont = 0
-                print('Processing image classify from queue')
-                for q in queue:
-                    cont += 1
-                    # deserialize the object and obtain the input image
-                    q = json.loads(q.decode('utf-8'))
-                    image = base64_decode_image(q['image'], IMAGE_DTYPE,
-                                                (1, IMAGE_HEIGHT, IMAGE_WIDTH,
-                                                 IMAGE_CHANS))
-                    preds = model.predict(image)
-                    output = model.format(preds)
-                    redisdb.set(q['id'], json.dumps(output))
-                    # remove the set of images from our queue
-                redisdb.ltrim(model_name, cont, -1)
-                s1 = time.time()
-                print(s1, 'Images classified in ', s1 - s0)
+                try:
+                    s0 = time.time()
+                    cont = 0
+                    print('Processing image classify from queue')
+                    for q in queue:
+                        cont += 1
+                        # deserialize the object and obtain the input image
+                        q = json.loads(q.decode('utf-8'))
+                        image = base64_decode_image(q['image'], IMAGE_DTYPE)
+                        # , (1, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANS))
+                        preds = model.predict(image)
+                        output = model.format(preds)
+                        dump = json.dumps(output)
+                        redisdb.set(q['id'], dump)
+                        # remove the set of images from our queue
+                    s1 = time.time()
+                    print('Images classified in ', s1 - s0)
+                finally:
+                    redisdb.ltrim(model_name, cont, -1)
             # sleep for a small amount
             time.sleep(SERVER_SLEEP)
 
@@ -183,7 +187,7 @@ def read_model(model, image):
     return True, predictions
 
 
-def prepare_image(image):
+def preprocess_image(image):
     # read the image in PIL format and prepare it for classification
     image = Image.open(io.BytesIO(image))
     image = prepare_image(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
@@ -200,10 +204,10 @@ def predict():
     s0 = None
     # ensure an image was properly uploaded to our endpoint
     if request.method == 'POST':
+        model = request.args.get('model')
         if request.files.get('image') and model:
-            model = request.args.get('model')
             s0 = time.time()
-            image = prepare_image(request.files['image'].read())
+            image = preprocess_image(request.files['image'].read())
             # indicate that the request was a success
             data['success'], data['predictions'] = read_model(model, image)
 
@@ -211,15 +215,15 @@ def predict():
     if s0:
         s1 = time.time()
         print(s1, 'Results read from queue and returned in ', s1 - s0)
-    return flask.jsonify(data)
+    return jsonify(data)
 
 
 @app.route('/teste', methods=['GET', 'POST'])
 @csrf.exempt
 @login_required
 def teste():
-    """Função simplificada para upload de arquivo de imagem
-    """
+    """Função simplificada para upload de arquivo de imagem"""
+    result = []
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -232,9 +236,18 @@ def teste():
             flash('No selected file')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            return jsonify(read_model('naive', file))
+            image = preprocess_image(file.read())
+            success, pred_bbox = read_model('naive', image)
+            if success:
+                print(pred_bbox)
+                result.append(json.dumps(pred_bbox))
+                coords = pred_bbox['bbox']
+                image = image[coords[0]:coords[2], coords[1]:coords[3]]
+                success, pred_vazio = read_model('vazio', image)
+                print(pred_vazio)
+                result.append(json.dumps(pred_vazio))
 
-    return render_template('teste.html')
+    return render_template('teste.html', result=result)
 
 
 @nav.navigation()
