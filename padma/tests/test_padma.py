@@ -86,3 +86,13 @@ class FlaskTestCase(unittest.TestCase):
         assert abs(preds['bbox'][1] - 28) < 4
         assert abs(preds['bbox'][2] - 472) < 4
         assert abs(preds['bbox'][3] - 206) < 4
+
+    def test_tela_teste(self):
+        image = open(STAMP_IMAGE, 'rb').read()
+        data = {}
+        data['file'] = (BytesIO(image), 'image')
+        rv = self.app.post(
+            '/teste',
+            content_type='multipart/form-data', data=data)
+        print(rv.data)
+        assert rv.data is not None
