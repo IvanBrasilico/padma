@@ -2,9 +2,8 @@
 Recebem uma imagem, retornam as coordenadas de um retângulo
 onde o contêiner está
 bbox (x1, y1, x2, y2)"""
-import io
-from scipy import misc
 import numpy as np
+
 
 class RetinaModel():
     def __init__(self):

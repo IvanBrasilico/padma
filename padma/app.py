@@ -4,19 +4,18 @@
 # Returns
 #   JSON dict with model response
 import pickle
-import bson
 import io
 import json
 import os
 import time
 import uuid
-from base64 import b64encode
-from base64 import decodebytes
+# from base64 import b64encode
+# from base64 import decodebytes
 from threading import Thread
 
 from flask import (Flask, flash, jsonify, redirect, render_template,
                    request, url_for)
-import redis
+# import redis
 from PIL import Image
 
 from flask_bootstrap import Bootstrap
@@ -25,12 +24,19 @@ from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 from flask_wtf.csrf import CSRFProtect
 
-from ajna_commons.flask.conf import (SECRET, BSON_REDIS, DATABASE, MONGODB_URI,
-                                     TIMEOUT, redisdb)
-from ajna_commons.flask.log import logger
+from ajna_commons.flask.conf import (abort, SECRET, DATABASE, MONGODB_URI,
+                                     redisdb)
+# from ajna_commons.flask.log import logger
 
 from padma.models.models import Naive, Pong, Vazios
-from padma.utils import base64_decode_image, base64_encode_image, prepare_image
+# from padma.utils import base64_decode_image, base64_encode_image,
+# prepare_image
+
+from flask_login import login_user, logout_user
+from ajna_commons.flask.login import (DBUser, authenticate, is_safe_url,
+                                      login_manager)
+from pymongo import MongoClient
+db = MongoClient(host=MONGODB_URI)[DATABASE]
 
 # initialize constants used to control image spatial dimensions and
 # data type
@@ -52,12 +58,6 @@ nav = Nav()
 
 
 # TODO: separate login logic
-from flask import abort, redirect, render_template, request, url_for
-from flask_login import login_required, login_user, logout_user
-from ajna_commons.flask.login import (DBUser, authenticate, is_safe_url,
-                                      login_manager)
-from pymongo import MongoClient
-db = MongoClient(host=MONGODB_URI)[DATABASE]
 
 login_manager.init_app(app)
 DBUser.dbsession = db
@@ -124,7 +124,7 @@ def classify_process():
     print('* Model vazios loaded')
     # print('* Loading model Retina BBox...')
     # modeldict['retina'] = Retina()
-    #print('* Model Retina BBox loaded')
+    # print('* Model Retina BBox loaded')
     print('* Loading model Naive BBox...')
     modeldict['naive'] = Naive()
     print('* Model naive bbox loaded')
@@ -149,7 +149,7 @@ def classify_process():
                         # image = decodebytes(image)
                         # image = base64_decode_image(q['image'], IMAGE_DTYPE)
                         # , (1, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANS))
-                        d =pickle.loads(q)
+                        d = pickle.loads(q)
                         preds = model.predict(d['image'])
                         output = model.format(preds)
                         dump = json.dumps(output)
@@ -209,9 +209,9 @@ def preprocess_image(image, prepare):
 @csrf.exempt
 @app.route('/predict', methods=['POST'])
 def predict():
-    preprocess = {
-        'resnet': prepare_image
-    }
+    # preprocess = {
+    #    'resnet': prepare_image
+    # }
     # initialize the data dictionary that will be returned from the view
     data = {'success': False}
     s0 = None
@@ -245,7 +245,7 @@ def predict():
 @csrf.exempt
 @login_required
 def teste():
-    """Função simplificada para teste interativo de upload de arquivo de imagem"""
+    """Função simplificada para teste interativo de upload de imagem"""
     result = []
     if request.method == 'POST':
         # check if the post request has the file part

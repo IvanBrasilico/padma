@@ -22,6 +22,8 @@ setup(
         'numpy',
         'opencv-python',
         'Pillow',
+        'pymongo',
+        'raven',
         'redis',
         'scipy',
         'sklearn',

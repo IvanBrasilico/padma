@@ -1,5 +1,5 @@
 # Tescases for padma.py
-from  PIL import Image
+
 import json
 import os
 import unittest
@@ -70,7 +70,6 @@ class FlaskTestCase(unittest.TestCase):
         print(test_dict.get('predictions'))
         assert test_dict.get('predictions')[0].get('1') > 0.5
         assert b'"1"' in rv.data
-
 
     def test_naive(self):
         image = open(STAMP_IMAGE, 'rb').read()
