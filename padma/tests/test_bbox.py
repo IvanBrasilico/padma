@@ -22,11 +22,11 @@ class TestModel(unittest.TestCase):
     def test_naive(self):
         preds = self.naive.predict(self.image)
         print(preds)
-        assert preds[1] == 'cc'
-        assert abs(preds[0][0] - 227) < 4
-        assert abs(preds[0][1] - 28) < 4
-        assert abs(preds[0][2] - 472) < 4
-        assert abs(preds[0][3] - 206) < 4
+        assert preds['class'] == 'cc'
+        assert abs(preds['bbox'][0] - 227) < 4
+        assert abs(preds['bbox'][1] - 28) < 4
+        assert abs(preds['bbox'][2] - 472) < 4
+        assert abs(preds['bbox'][3] - 206) < 4
 
     """def test_resnet(self):
         preds = self.retina.predict(self.image)

@@ -3,11 +3,15 @@
 #  model, params
 # Returns
 #   JSON dict with model response
+import pickle
+import bson
 import io
 import json
 import os
 import time
 import uuid
+from base64 import b64encode
+from base64 import decodebytes
 from threading import Thread
 
 from flask import (Flask, flash, jsonify, redirect, render_template,
@@ -139,13 +143,17 @@ def classify_process():
                     for q in queue:
                         cont += 1
                         # deserialize the object and obtain the input image
-                        q = json.loads(q.decode('utf-8'))
-                        image = base64_decode_image(q['image'], IMAGE_DTYPE)
+
+                        # q = json.loads(q.decode('utf-8'))
+                        # image = bytes(q['image'], encoding='utf-8')
+                        # image = decodebytes(image)
+                        # image = base64_decode_image(q['image'], IMAGE_DTYPE)
                         # , (1, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANS))
-                        preds = model.predict(image)
+                        d =pickle.loads(q)
+                        preds = model.predict(d['image'])
                         output = model.format(preds)
                         dump = json.dumps(output)
-                        redisdb.set(q['id'], dump)
+                        redisdb.set(d['id'], dump)
                         # remove the set of images from our queue
                     s1 = time.time()
                     print('Images classified in ', s1 - s0)
@@ -161,8 +169,8 @@ def read_model(model, image):
     # classification ID + image to the queue
     k = str(uuid.uuid4())
     d = {'id': k,
-         'image': base64_encode_image(image)}
-    redisdb.rpush(model, json.dumps(d))
+         'image': image}
+    redisdb.rpush(model, pickle.dumps(d))
     s0 = time.time()
     while True:
         # attempt to grab the output predictions
@@ -187,28 +195,43 @@ def read_model(model, image):
     return True, predictions
 
 
-def preprocess_image(image):
+def preprocess_image(image, prepare):
     # read the image in PIL format and prepare it for classification
     image = Image.open(io.BytesIO(image))
-    image = prepare_image(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
-    # ensure our NumPy array is C-contiguous as well,
-    # otherwise we won't be able to serialize it
-    image = image.copy(order='C')
+    if prepare:
+        image = prepare(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
+        # ensure our NumPy array is C-contiguous as well,
+        # otherwise we won't be able to serialize it
+        image = image.copy(order='C')
     return image
 
 
+@csrf.exempt
 @app.route('/predict', methods=['POST'])
 def predict():
+    preprocess = {
+        'resnet': prepare_image
+    }
     # initialize the data dictionary that will be returned from the view
     data = {'success': False}
     s0 = None
     # ensure an image was properly uploaded to our endpoint
     if request.method == 'POST':
         model = request.args.get('model')
-        if request.files.get('image') and model:
+        image = request.files.get('image')
+        if image and model:
             s0 = time.time()
-            image = preprocess_image(request.files['image'].read())
+            """
+            prepare = preprocess.get(model)
+            if prepare:
+                image = preprocess_image(
+                    request.files['image'].read(), prepare)
+            else:
+                image = request.files['image'].read()
+
             # indicate that the request was a success
+            """
+            image = Image.open(io.BytesIO(image.read()))
             data['success'], data['predictions'] = read_model(model, image)
 
     # return the data dictionary as a JSON response
@@ -222,7 +245,7 @@ def predict():
 @csrf.exempt
 @login_required
 def teste():
-    """Função simplificada para upload de arquivo de imagem"""
+    """Função simplificada para teste interativo de upload de arquivo de imagem"""
     result = []
     if request.method == 'POST':
         # check if the post request has the file part

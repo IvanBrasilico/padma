@@ -2,7 +2,9 @@
 Recebem uma imagem, retornam as coordenadas de um retângulo
 onde o contêiner está
 bbox (x1, y1, x2, y2)"""
-
+import io
+from scipy import misc
+import numpy as np
 
 class RetinaModel():
     def __init__(self):
@@ -61,9 +63,9 @@ def find_conteiner(afile):
     xleft, ytop, xright, ybottom
 
     """
-    print(afile.shape)
-    im = afile[0, :, :, 0]
-    print(im.shape)
+    # im = misc.imread(io.BytesIO(afile), True)
+    im = np.asarray(afile)
+    im = im[:, :, 0]
     yfinal, xfinal = im.shape
     ymeio = round(yfinal / 2)
     xmeio = round(xfinal / 2)

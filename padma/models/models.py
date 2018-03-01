@@ -23,6 +23,7 @@ class Pong(ModelBase):
     def predict(self):
         return 'Pong'
 
+
 class ResNet(ModelBase):
     def __init__(self, weights='imagenet'):
         self._model = ResNet50(weights=weights)
@@ -52,3 +53,9 @@ class Retina(ModelBase):
 class Naive(ModelBase):
     def __init__(self):
         self._model = NaiveModel()
+
+    def predict(self, data):
+        if not self._model:
+            raise('Error! Model Naive not assigned.')
+        self._preds = self._model.predict(data)
+        return self._preds
