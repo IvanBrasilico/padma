@@ -259,7 +259,7 @@ def teste():
             flash('No selected file')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            image = preprocess_image(file.read())
+            image = Image.open(io.BytesIO(file.read()))
             success, pred_bbox = read_model('naive', image)
             if success:
                 print(pred_bbox)
