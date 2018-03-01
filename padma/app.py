@@ -13,7 +13,7 @@ import uuid
 # from base64 import decodebytes
 from threading import Thread
 
-from flask import (Flask, flash, jsonify, redirect, render_template,
+from flask import (abort, Flask, flash, jsonify, redirect, render_template,
                    request, url_for)
 # import redis
 from PIL import Image
@@ -24,7 +24,7 @@ from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 from flask_wtf.csrf import CSRFProtect
 
-from ajna_commons.flask.conf import (abort, SECRET, DATABASE, MONGODB_URI,
+from ajna_commons.flask.conf import (SECRET, DATABASE, MONGODB_URI,
                                      redisdb)
 # from ajna_commons.flask.log import logger
 
