@@ -6,6 +6,7 @@
 import pickle
 import io
 import json
+import numpy as np
 import os
 import time
 import uuid
@@ -28,7 +29,7 @@ from ajna_commons.flask.conf import (SECRET, DATABASE, MONGODB_URI,
                                      redisdb)
 # from ajna_commons.flask.log import logger
 
-from padma.models.models import Naive, Pong, Vazios
+from padma.models.models import Naive, Peso, Pong, Vazios
 # from padma.utils import base64_decode_image, base64_encode_image,
 # prepare_image
 
@@ -122,6 +123,9 @@ def classify_process():
     print('* Loading model Vazios...')
     modeldict['vazio'] = Vazios()
     print('* Model vazios loaded')
+    print('* Loading model Peso...')
+    modeldict['peso'] = Peso()
+    print('* Model peso loaded')
     # print('* Loading model Retina BBox...')
     # modeldict['retina'] = Retina()
     # print('* Model Retina BBox loaded')
@@ -152,6 +156,7 @@ def classify_process():
                         d = pickle.loads(q)
                         preds = model.predict(d['image'])
                         output = model.format(preds)
+                        print('preds', preds)
                         dump = json.dumps(output)
                         redisdb.set(d['id'], dump)
                         # remove the set of images from our queue
@@ -262,12 +267,17 @@ def teste():
             image = Image.open(io.BytesIO(file.read()))
             success, pred_bbox = read_model('naive', image)
             if success:
+                print(image.size)
                 print(pred_bbox)
+                result.append(json.dumps(image.size))
                 result.append(json.dumps(pred_bbox))
                 coords = pred_bbox['bbox']
-                image = image[coords[0]:coords[2], coords[1]:coords[3]]
-                success, pred_vazio = read_model('vazio', image)
+                im = np.asarray(image)
+                im = im[coords[0]:coords[2], coords[1]:coords[3]]
+                success, pred_vazio = read_model('vazio', im)
                 print(pred_vazio)
+                result.append(json.dumps(pred_vazio))
+                success, pred_vazio = read_model('peso', im)
                 result.append(json.dumps(pred_vazio))
 
     return render_template('teste.html', result=result)

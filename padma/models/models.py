@@ -2,6 +2,8 @@ from keras.applications import ResNet50, imagenet_utils
 
 from padma.models.bbox.bbox import NaiveModel, RetinaModel
 from padma.models.vazios.vazios import VazioModel
+from padma.models.vazios.vazios import VazioModel
+from padma.models.peso.peso import PesoModel
 
 
 class ModelBase():
@@ -39,6 +41,10 @@ class ResNet(ModelBase):
 class Vazios(ModelBase):
     def __init__(self):
         self._model = VazioModel()
+
+class Peso(ModelBase):
+    def __init__(self):
+        self._model = PesoModel()
 
 #    def predict(self, data):
 #        self._preds = {'0': 0.99, '1': 0.01}
