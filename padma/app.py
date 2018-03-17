@@ -270,12 +270,13 @@ def teste():
             return redirect(request.url)"""
         if file:  # and allowed_file(file.filename):
             print(file)
-            os.remove('padma/static/temp.jpg')
-            with open('padma/static/temp.jpg', 'wb') as temp:
+            # os.remove('padma/static/temp.jpg')
+            tempfile = 'padma/static/temp.jpg'
+            with open(tempfile, 'wb') as temp:
                 temp.write(file.read())
             
             # print('content', file.read())
-            image = Image.open('padma/static/temp.jpg')
+            image = Image.open(tempfile))
             success, pred_bbox = read_model('naive', image)
             if success:
                 print(image.size)
