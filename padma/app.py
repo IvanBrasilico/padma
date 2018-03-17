@@ -274,9 +274,8 @@ def teste():
             tempfile = 'padma/static/temp.jpg'
             with open(tempfile, 'wb') as temp:
                 temp.write(file.read())
-            
             # print('content', file.read())
-            image = Image.open(tempfile))
+            image = Image.open(tempfile)
             success, pred_bbox = read_model('naive', image)
             if success:
                 print(image.size)

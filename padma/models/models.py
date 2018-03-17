@@ -2,7 +2,6 @@
 
 from padma.models.bbox.bbox import NaiveModel, RetinaModel
 from padma.models.vazios.vazios import VazioModel
-from padma.models.vazios.vazios import VazioModel
 from padma.models.peso.peso import PesoModel
 
 
@@ -28,8 +27,8 @@ class Pong(ModelBase):
 
 class ResNet(ModelBase):
     def __init__(self, weights='imagenet'):
-       pass
-       # self._model = ResNet50(weights=weights)
+        pass
+        # self._model = ResNet50(weights=weights)
 
     def format(self, preds):
         result_set = []
@@ -43,6 +42,7 @@ class ResNet(ModelBase):
 class Vazios(ModelBase):
     def __init__(self):
         self._model = VazioModel()
+
 
 class Peso(ModelBase):
     def __init__(self):
