@@ -1,4 +1,4 @@
-from keras.applications import ResNet50, imagenet_utils
+# from keras.applications import ResNet50, imagenet_utils
 
 from padma.models.bbox.bbox import NaiveModel, RetinaModel
 from padma.models.vazios.vazios import VazioModel
@@ -28,10 +28,12 @@ class Pong(ModelBase):
 
 class ResNet(ModelBase):
     def __init__(self, weights='imagenet'):
-        self._model = ResNet50(weights=weights)
+       pass
+       # self._model = ResNet50(weights=weights)
 
     def format(self, preds):
-        result_set = imagenet_utils.decode_predictions(preds)
+        result_set = []
+        # result_set = imagenet_utils.decode_predictions(preds)
         output = []
         for (_, label, prob) in result_set[0]:
             output.append({'label': label, 'probability': float(prob)})

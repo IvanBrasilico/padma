@@ -248,10 +248,15 @@ def predict():
 
 @app.route('/teste', methods=['GET', 'POST'])
 @csrf.exempt
-@login_required
+# TODO: Make login in all clients and tests, then uncomment next line
+# @login_required
 def teste():
     """Função simplificada para teste interativo de upload de imagem"""
     result = []
+    print(request.method)
+    print(request.form)
+    import pprint
+    pprint.pprint(request.files)
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -260,11 +265,17 @@ def teste():
         file = request.files.get('file')
         # if user does not select file, browser also
         # submit a empty part without filename
-        if file.filename == '':
+        """if file.filename == '':
             flash('No selected file')
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            image = Image.open(io.BytesIO(file.read()))
+            return redirect(request.url)"""
+        if file:  # and allowed_file(file.filename):
+            print(file)
+            os.remove('padma/static/temp.jpg')
+            with open('padma/static/temp.jpg', 'wb') as temp:
+                temp.write(file.read())
+            
+            # print('content', file.read())
+            image = Image.open('padma/static/temp.jpg')
             success, pred_bbox = read_model('naive', image)
             if success:
                 print(image.size)
