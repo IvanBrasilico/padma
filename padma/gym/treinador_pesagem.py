@@ -22,8 +22,10 @@ from sklearn.metrics import explained_variance_score, mean_absolute_error
 from scipy import misc
 from ajna_commons.flask.conf import (DATABASE, MONGODB_URI)
 from padma.models.peso.peso import PesoModel
+from padma.models.bbox.bbox import NaiveModel
 
 modelclass = PesoModel()
+bboxclass = NaiveModel()
 
 BASE_PATH = os.path.dirname(__file__)
 HIST_FILE = os.path.join(BASE_PATH, 'histograms_peso.pkl')
@@ -51,8 +53,9 @@ def make_histograms():
             tempfile = '/tmp/temp.jpg'
             with open(tempfile, 'wb') as temp:
                 temp.write(grid_out.read())
-            image = Image.open(tempfile)
+            bbox = bboxclass.predict(tempfile).get('bbox')
             im = np.asarray(image)
+            im = im[bbox[0], bbox[1], bbox[2], bbox[3]]
             histograms.append(modelclass.hist(im))
             labels.append(float(linha[peso_index]))
             # print(histograms)
