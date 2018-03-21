@@ -21,6 +21,7 @@ from sklearn import linear_model
 from sklearn.metrics import explained_variance_score, mean_absolute_error
 from scipy import misc
 from ajna_commons.flask.conf import (DATABASE, MONGODB_URI)
+from ajna_commons.conf import ENCODE
 from padma.models.peso.peso import PesoModel
 from padma.models.bbox.bbox import NaiveModel
 
@@ -39,8 +40,9 @@ def make_histograms():
     print('Connecting to MongoDB...')
     db = MongoClient(host=MONGODB_URI)[DATABASE]
     fs = GridFS(db)
+    
     print('Making histograms...')
-    with open(CSV_FILE, 'r') as csv_in:
+    with open(CSV_FILE, 'r', encoding=ENCODE, newline='') as csv_in:
         reader = csv.reader(csv_in)
         linha = next(reader)
         id_index = linha.index('id')
@@ -50,16 +52,21 @@ def make_histograms():
                 print(ind)
             print('.', end='', flush=True)
             grid_out = fs.get(ObjectId(linha[id_index]))
-            tempfile = '/tmp/temp.jpg'
+            tempfile = 'temp.jpg'
             with open(tempfile, 'wb') as temp:
                 temp.write(grid_out.read())
-            bbox = bboxclass.predict(tempfile).get('bbox')
+            image = Image.open(tempfile)
+            # print(image.size)
+            bbox = bboxclass.predict(image).get('bbox')
             im = np.asarray(image)
-            im = im[bbox[0], bbox[1], bbox[2], bbox[3]]
-            histograms.append(modelclass.hist(im))
-            labels.append(float(linha[peso_index]))
-            # print(histograms)
-            # print(labels)
+            # im = im[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+            with np.errstate(invalid='raise', divide='raise'):
+                try:
+                    histograms.append(modelclass.hist(im))
+                    labels.append(float(linha[peso_index]))
+                except FloatingPointError:
+                    print('Floating point error')
+                    pass
         with open(HIST_FILE, 'wb') as out:
             pickle.dump(histograms, out)
         with open(LABEL_FILE, 'wb') as out:
@@ -80,8 +87,12 @@ if __name__ == '__main__':
         make_histograms()
     else:
         histograms, labels = load_histograms()
+    # print(histograms)
+    # print(labels)
     histograms_train = histograms[:800]
     labels_train = labels[:800]
+    # print(histograms_train)
+    # print(labels_train)
     histograms_test = histograms[-200:]
     labels_test = labels[-200:]
     modelclass.train(histograms_train, labels_train)

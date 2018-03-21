@@ -64,6 +64,9 @@ def find_conteiner(afile):
     """
     # im = misc.imread(io.BytesIO(afile), True)
     im = np.asarray(afile)
+    # print(im.shape)
+    # print(len(im.shape))
+    # if len(im.shape) == 3:
     im = im[:, :, 0]
     yfinal, xfinal = im.shape
     ymeio = round(yfinal / 2)
