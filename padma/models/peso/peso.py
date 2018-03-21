@@ -8,16 +8,17 @@ n_bins = 32
 
 
 class PesoModel():
-    def __init__(self, bins=32):
+    def __init__(self, bins=32, load=True):
         self._bins = bins
-        histograms = pickle.load(
-            open(os.path.join(os.path.dirname(__file__), '..', 'vazios',
-                              'histograms.pkl'), 'rb'))
-        labels = pickle.load(
-            open(os.path.join(os.path.dirname(__file__), '..', 'vazios',
-                              'labels.pkl'), 'rb'))
-        self.clf = linear_model.LinearRegression()
-        self.clf.fit(histograms, labels)
+        if load:
+            histograms = pickle.load(
+                open(os.path.join(os.path.dirname(__file__), '..', 'vazios',
+                                'histograms.pkl'), 'rb'))
+            labels = pickle.load(
+                open(os.path.join(os.path.dirname(__file__), '..', 'vazios',
+                                'labels.pkl'), 'rb'))
+            self.model = linear_model.LinearRegression()
+            self.model.fit(histograms, labels)
 
     def hist(self, img):
         histo = np.histogram(img, bins=n_bins, density=True)
@@ -26,7 +27,10 @@ class PesoModel():
     def pesoimagem(self, file=None, image=None):
         if file:
             image = misc.imread(file)
-        return self.clf.predict([self.hist(image)])
+        return self.model.predict([self.hist(image)])
+
+    def train(self, histograms, labels):
+        self.model.fit(histograms, labels)
 
     def predict(self, image):
         peso = self.pesoimagem(image=image)
