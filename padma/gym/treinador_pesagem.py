@@ -9,16 +9,16 @@ Para treinar novamente, basta excluir arquivos .pkl
 
 """
 import csv
+import matplotlib.pyplot as plt
 import numpy as np
 import os
-# TODO: passar tudo para numpy e eliminar pickle
-import pickle
 from bson.objectid import ObjectId
 from gridfs import GridFS
 from PIL import Image
 from pymongo import MongoClient
 from sklearn import linear_model
-from sklearn.metrics import explained_variance_score, mean_absolute_error
+from sklearn.metrics import explained_variance_score, mean_absolute_error, \
+    mean_squared_log_error
 from scipy import misc
 from ajna_commons.flask.conf import (DATABASE, MONGODB_URI)
 from ajna_commons.conf import ENCODE
@@ -29,18 +29,17 @@ modelclass = PesoModel()
 bboxclass = NaiveModel()
 
 BASE_PATH = os.path.dirname(__file__)
-HIST_FILE = os.path.join(BASE_PATH, 'histograms_peso.pkl')
-LABEL_FILE = os.path.join(BASE_PATH, 'labels_peso.pkl')
+HIST_FILE = os.path.join(BASE_PATH, 'histograms_peso.npy')
+LABEL_FILE = os.path.join(BASE_PATH, 'labels_peso.npy')
 CSV_FILE = os.path.join(BASE_PATH, 'pesovolexport.csv')
-histograms = []
-labels = []
 
 
 def make_histograms():
+    histograms = []
+    labels = []
     print('Connecting to MongoDB...')
     db = MongoClient(host=MONGODB_URI)[DATABASE]
     fs = GridFS(db)
-    
     print('Making histograms...')
     with open(CSV_FILE, 'r', encoding=ENCODE, newline='') as csv_in:
         reader = csv.reader(csv_in)
@@ -59,7 +58,7 @@ def make_histograms():
             # print(image.size)
             bbox = bboxclass.predict(image).get('bbox')
             im = np.asarray(image)
-            # im = im[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+            im = im[bbox[1]:bbox[3], bbox[0]:bbox[2]]
             with np.errstate(invalid='raise', divide='raise'):
                 try:
                     histograms.append(modelclass.hist(im))
@@ -68,17 +67,18 @@ def make_histograms():
                     print('Floating point error')
                     pass
         with open(HIST_FILE, 'wb') as out:
-            pickle.dump(histograms, out)
+            np.save(out, np.array(histograms))
         with open(LABEL_FILE, 'wb') as out:
-            pickle.dump(labels, out)
+            labels = np.array(labels)
+            np.save(out, labels)
 
 
 def load_histograms():
     print('Loading histograms...')
     with open(HIST_FILE, 'rb') as pkl:
-        histograms = pickle.load(pkl)
+        histograms = np.load(pkl)
     with open(LABEL_FILE, 'rb') as pkl:
-        labels = pickle.load(pkl)
+        labels = np.load(pkl)
     return histograms, labels
 
 
@@ -97,5 +97,10 @@ if __name__ == '__main__':
     labels_test = labels[-200:]
     modelclass.train(histograms_train, labels_train)
     labels_predicted = modelclass.model.predict(histograms_test)
-    print(explained_variance_score(labels_test, labels_predicted))
-    print(mean_absolute_error(labels_test, labels_predicted))
+    print()
+    print('Variance', explained_variance_score(labels_test, labels_predicted))
+    print('MAE', mean_absolute_error(labels_test, labels_predicted))
+    # print('MSE', mean_squared_log_error(labels_test, labels_predicted))
+    print('média dos pesos', labels.mean())
+    plt.scatter(labels_test, labels_predicted)
+    plt.show()

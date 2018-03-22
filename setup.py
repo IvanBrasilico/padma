@@ -19,6 +19,7 @@ setup(
         'keras',
         'h5py',
         'imutils',
+        'matplotlib',
         'numpy',
         'opencv-python',
         'Pillow',
