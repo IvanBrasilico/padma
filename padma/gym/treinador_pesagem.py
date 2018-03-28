@@ -97,7 +97,7 @@ if __name__ == '__main__':
     histograms_train = histograms[:800]
     labels_train = labels[:800]
     # print(histograms_train)
-    # print(labels_train)
+    print(max(labels_train))
     histograms_test = histograms[-200:]
     labels_test = labels[-200:]
     modelclass.train(histograms_train, labels_train)
@@ -107,5 +107,39 @@ if __name__ == '__main__':
     print('MAE', mean_absolute_error(labels_test, labels_predicted))
     # print('MSE', mean_squared_log_error(labels_test, labels_predicted))
     print('média dos pesos', labels.mean())
+    for ind, peso in enumerate(labels_predicted):
+        if peso > 27000:
+            print(ind, peso, labels_test[ind])
     plt.scatter(labels_test, labels_predicted)
     plt.show()
+
+    # Eliminar outliers
+    new_histograms = []
+    new_labels = []
+    all_labels_predicted = modelclass.model.predict(histograms)
+    for peso, peso_pred, histo in zip(labels, all_labels_predicted,histograms):
+        razao = abs(peso - peso_pred) / peso
+        if razao < .2:
+            new_histograms.append(histo)
+            new_labels.append(peso)
+    
+    print(len(new_histograms), len(new_labels))
+    cont = len(new_histograms)
+    
+    histograms_train = new_histograms[:cont - 100]
+    labels_train = new_labels[:cont - 100]
+    histograms_test = new_histograms[-100:]
+    labels_test = new_labels[-100:]
+    modelclass.train(histograms_train, labels_train)
+    labels_predicted = modelclass.model.predict(histograms_test)
+    print()
+    print('Variance', explained_variance_score(labels_test, labels_predicted))
+    print('MAE', mean_absolute_error(labels_test, labels_predicted))
+    # print('MSE', mean_squared_log_error(labels_test, labels_predicted))
+    print('média dos pesos', np.array(new_labels).mean())
+    plt.scatter(labels_test, labels_predicted)
+    plt.show()
+    
+    
+
+
