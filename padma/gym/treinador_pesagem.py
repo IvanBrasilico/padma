@@ -75,6 +75,7 @@ def make_histograms():
         with open(LABEL_FILE, 'wb') as out:
             labels = np.array(labels)
             np.save(out, labels)
+    return histograms, labels
 
 
 def load_histograms():
@@ -88,7 +89,7 @@ def load_histograms():
 
 if __name__ == '__main__':
     if not os.path.exists(HIST_FILE):
-        make_histograms()
+        histograms, labels = make_histograms()
     else:
         histograms, labels = load_histograms()
     # print(histograms)
