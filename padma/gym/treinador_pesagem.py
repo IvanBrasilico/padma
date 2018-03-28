@@ -24,9 +24,11 @@ from ajna_commons.flask.conf import (DATABASE, MONGODB_URI)
 from ajna_commons.conf import ENCODE
 from padma.models.peso.peso import PesoModel
 from padma.models.bbox.bbox import NaiveModel
+from padma.models.conteiner20e40.bbox import SSDMobileModel
 
 modelclass = PesoModel()
 bboxclass = NaiveModel()
+bboxclass = SSDMobileModel()
 
 BASE_PATH = os.path.dirname(__file__)
 HIST_FILE = os.path.join(BASE_PATH, 'histograms_peso.npy')
@@ -56,7 +58,8 @@ def make_histograms():
                 temp.write(grid_out.read())
             image = Image.open(tempfile)
             # print(image.size)
-            bbox = bboxclass.predict(image).get('bbox')
+            bboxes = bboxclass.predict(image)
+            bbox = bboxes[0].get('bbox')
             im = np.asarray(image)
             im = im[bbox[1]:bbox[3], bbox[0]:bbox[2]]
             with np.errstate(invalid='raise', divide='raise'):

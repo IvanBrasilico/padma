@@ -3,6 +3,7 @@
 from padma.models.bbox.bbox import NaiveModel, RetinaModel
 from padma.models.vazios.vazios import VazioModel
 from padma.models.peso.peso import PesoModel
+from padma.models.conteiner20e40.bbox import SSDMobileModel
 
 
 class ModelBase():
@@ -48,10 +49,6 @@ class Peso(ModelBase):
     def __init__(self):
         self._model = PesoModel()
 
-#    def predict(self, data):
-#        self._preds = {'0': 0.99, '1': 0.01}
-#        return self._preds
-
 
 class Retina(ModelBase):
     def __init__(self):
@@ -62,8 +59,7 @@ class Naive(ModelBase):
     def __init__(self):
         self._model = NaiveModel()
 
-    def predict(self, data):
-        if not self._model:
-            raise('Error! Model Naive not assigned.')
-        self._preds = self._model.predict(data)
-        return self._preds
+
+class SSD(ModelBase):
+    def __init__(self):
+        self._model = SSDMobileModel()

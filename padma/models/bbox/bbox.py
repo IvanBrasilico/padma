@@ -110,4 +110,4 @@ class NaiveModel():
         # from image_aq.utils.image_functions import find_conteiner
         # Code copied from this file because of path problems
         # TODO: allow padma submodule import things from AJNA_MOD
-        return {'bbox': find_conteiner(image), 'class': 'cc'}
+        return [{'bbox': find_conteiner(image), 'class': 'cc'}]
