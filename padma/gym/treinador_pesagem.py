@@ -59,16 +59,17 @@ def make_histograms():
             image = Image.open(tempfile)
             # print(image.size)
             bboxes = bboxclass.predict(image)
-            bbox = bboxes[0].get('bbox')
-            im = np.asarray(image)
-            im = im[bbox[1]:bbox[3], bbox[0]:bbox[2]]
-            with np.errstate(invalid='raise', divide='raise'):
-                try:
-                    histograms.append(modelclass.hist(im))
-                    labels.append(float(linha[peso_index]))
-                except FloatingPointError:
-                    print('Floating point error')
-                    pass
+            if len(bboxes) > 0:
+                bbox = bboxes[0].get('bbox')
+                im = np.asarray(image)
+                im = im[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+                with np.errstate(invalid='raise', divide='raise'):
+                    try:
+                        histograms.append(modelclass.hist(im))
+                        labels.append(float(linha[peso_index]))
+                    except FloatingPointError:
+                        print('Floating point error')
+                        pass
         with open(HIST_FILE, 'wb') as out:
             np.save(out, np.array(histograms))
         with open(LABEL_FILE, 'wb') as out:

@@ -129,10 +129,10 @@ class SSDMobileModel():
             if score > self._threshold:
                 yfinal, xfinal, _ = image_np.shape
                 bbox = [0., 0., 0., 0.]
-                bbox[0] = output_dict['detection_boxes'][ind][0] * yfinal
-                bbox[2] = output_dict['detection_boxes'][ind][2] * yfinal
-                bbox[1] = output_dict['detection_boxes'][ind][1] * xfinal
-                bbox[3] = output_dict['detection_boxes'][ind][3] * xfinal
+                bbox[0] = int(output_dict['detection_boxes'][ind][0] * yfinal)
+                bbox[2] = int(output_dict['detection_boxes'][ind][2] * yfinal)
+                bbox[1] = int(output_dict['detection_boxes'][ind][1] * xfinal)
+                bbox[3] = int(output_dict['detection_boxes'][ind][3] * xfinal)
                 result.append({
                     'bbox': bbox, 
                     'class': output_dict['detection_classes'][ind]
