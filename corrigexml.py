@@ -7,6 +7,7 @@ for filename in os.listdir(path):
             lista = xml.readlines()
         modificado = False
         for ind, linha in enumerate(lista):
+            """
             posi = linha.find('/conteiner_to_check')
             if posi != -1:
                 print(linha)
@@ -24,7 +25,9 @@ for filename in os.listdir(path):
                 lista[ind] = linha
                 modificado = True
                 break
-            posi = linha.find('<folder>conteiner_to_check')
+
+            """
+            posi = linha.find('<folder>conteineres_rotulados')
             if posi != -1:
                 print(linha)
                 linha = '<folder></folder>\n'
@@ -32,7 +35,7 @@ for filename in os.listdir(path):
                 lista[ind] = linha
                 modificado = True
                 break
-            posi = linha.find('<folder></folder>')
+            """posi = linha.find('<folder></folder>')
             if posi != -1:
                 print(linha)
                 linha = '<folder>'+path+'</folder>\n'
@@ -40,6 +43,7 @@ for filename in os.listdir(path):
                 lista[ind] = linha
                 modificado = True
                 break
+            """
         if modificado:
             with open(os.path.join(path, filename), 'w') as xml:
                 lista = xml.writelines(lista)
