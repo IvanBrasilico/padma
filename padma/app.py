@@ -282,7 +282,7 @@ def teste():
                 print(pred_bbox)
                 result.append(json.dumps(image.size))
                 result.append(json.dumps(pred_bbox))
-                coords = pred_bbox['bbox']
+                coords = pred_bbox[0]['bbox']
                 im = np.asarray(image)
                 im = im[coords[0]:coords[2], coords[1]:coords[3]]
                 success, pred_vazio = read_model('vazio', im)
