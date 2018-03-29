@@ -41,12 +41,12 @@ def find_conteiner(afile):
     # Depois de achado o teto, percorrer as laterais para achar os lados
     xesquerda = 1
     for r in range(0, xmeio):
-        if (im[yteto+5, r] < 230):
+        if (im[yteto + 5, r] < 230):
             xesquerda = r
             break
     xdireita = xfinal - 1
-    for r in range(xfinal-1, xmeio, -1):
-        if (im[yteto+5, r] < 215):
+    for r in range(xfinal - 1, xmeio, -1):
+        if (im[yteto + 5, r] < 215):
             xdireita = r
             break
     # Achar o piso do contêiner é bem mais difícil...
@@ -57,7 +57,7 @@ def find_conteiner(afile):
     # Por fim, fazer umas correções se as medidas achadas forem absurdas
     if (ychao > yfinal):
         ychao = yfinal
-    if ((xdireita-xesquerda) < (xfinal/4)):
+    if ((xdireita - xesquerda) < (xfinal / 4)):
         xdireita = xfinal - 5
         xesquerda = 5
     if (yteto == ymeio):
