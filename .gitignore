@@ -141,3 +141,4 @@ padma/gym/pesovolexport.csv
 padma/gym/histograms_peso.pkl
 padma/gym/labels_peso.pkl
 temp.jpg
+padma/gym/images/*
