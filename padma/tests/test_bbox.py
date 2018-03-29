@@ -24,10 +24,10 @@ class TestModel(unittest.TestCase):
         print(preds)
         preds = preds[0]
         assert preds['class'] == 'cc'
-        assert abs(preds['bbox'][0] - 227) < 4
-        assert abs(preds['bbox'][1] - 28) < 4
-        assert abs(preds['bbox'][2] - 472) < 4
-        assert abs(preds['bbox'][3] - 206) < 4
+        assert abs(preds['bbox'][0] - 25) < 5
+        assert abs(preds['bbox'][1] - 226) < 5
+        assert abs(preds['bbox'][2] - 204) < 5
+        assert abs(preds['bbox'][3] - 472) < 5
 
     def test_ssd(self):
         preds = self.ssd.predict(self.image)

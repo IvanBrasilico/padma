@@ -8,15 +8,15 @@ n_bins = 32
 
 
 class PesoModel():
-    def __init__(self, bins=32, load=True):
+    def __init__(self, bins=16, load=True):
         self._bins = bins
         if load:
             histograms = pickle.load(
                 open(os.path.join(os.path.dirname(__file__), '..', 'vazios',
-                                'histograms.pkl'), 'rb'))
+                                  'histograms.pkl'), 'rb'))
             labels = pickle.load(
                 open(os.path.join(os.path.dirname(__file__), '..', 'vazios',
-                                'labels.pkl'), 'rb'))
+                                  'labels.pkl'), 'rb'))
             self.model = linear_model.LinearRegression()
             self.model.fit(histograms, labels)
 

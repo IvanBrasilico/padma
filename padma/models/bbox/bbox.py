@@ -1,47 +1,8 @@
 """Algoritmos para encontrar a borda dos contêineres
 Recebem uma imagem, retornam as coordenadas de um retângulo
 onde o contêiner está
-bbox (x1, y1, x2, y2)"""
+bbox (y1, x1, y2, x2)"""
 import numpy as np
-
-
-class RetinaModel():
-    def __init__(self):
-        import keras
-        from keras_retinanet.models.resnet import custom_objects
-        import os
-        import tensorflow as tf
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
-        session = tf.Session(config=config)
-        keras.backend.tensorflow_backend.set_session(session)
-        model_path = os.path.join(os.path.dirname(__file__), 'resnet50_csv.h5')
-        self._model = keras.models.load_model(
-            model_path, custom_objects=custom_objects)
-        self._labels_to_names = {0: 'cc'}
-
-    def predict(self, image):
-        import numpy as np
-        from keras_retinanet.utils.image import (
-            preprocess_image, resize_image)
-        image = preprocess_image(image)
-        image, scale = resize_image(image)
-        _, _, detections = self._model.predict_on_batch(
-            np.expand_dims(image, axis=0))
-        predicted_labels = np.argmax(detections[0, :, 4:], axis=1)
-        scores = detections[0, np.arange(
-            detections.shape[1]), 4 + predicted_labels]
-        # correct for image scale
-        detections[0, :, :4] /= scale
-        # visualize detections
-        result = []
-        for idx, (label, score) in enumerate(zip(predicted_labels, scores)):
-            if score < 0.5:
-                continue
-            b = detections[0, idx, :4].astype(int)
-            caption = '{} {:.3f}'.format(self._labels_to_names[label], score)
-            result.append((b, caption))
-        return result
 
 
 def find_conteiner(afile):
@@ -101,7 +62,7 @@ def find_conteiner(afile):
         xesquerda = 5
     if (yteto == ymeio):
         yteto = 5
-    return int(xesquerda), int(yteto), int(xdireita), int(ychao)
+    return int(yteto), int(xesquerda), int(ychao), int(xdireita)
 
 
 class NaiveModel():

@@ -21,21 +21,20 @@ from PIL import Image
 
 from flask_bootstrap import Bootstrap
 from flask_login import current_user, login_required
+from flask_login import login_user, logout_user
 from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 from flask_wtf.csrf import CSRFProtect
 
 from ajna_commons.flask.conf import (SECRET, DATABASE, MONGODB_URI,
                                      redisdb)
+from ajna_commons.flask.login import (DBUser, authenticate, is_safe_url,
+                                      login_manager)
 # from ajna_commons.flask.log import logger
 
 from padma.models.models import Naive, Peso, Pong, Vazios
-# from padma.utils import base64_decode_image, base64_encode_image,
-# prepare_image
+from padma.models.conteiner20e40.bbox import SSDMobileModel
 
-from flask_login import login_user, logout_user
-from ajna_commons.flask.login import (DBUser, authenticate, is_safe_url,
-                                      login_manager)
 from pymongo import MongoClient
 db = MongoClient(host=MONGODB_URI)[DATABASE]
 
@@ -115,9 +114,6 @@ def classify_process():
     # Load the pre-trained models, only once.
     # Then wait for incoming queries on redis
     modeldict = dict()
-    # print('* Loading model RESNET...')
-    # modeldict['resnet'] = ResNet(weights='imagenet')
-    # print('* Model resnet loaded')
     print('* Loading model PONG (ping-pong test if alive) *')
     modeldict['ping'] = Pong()
     print('* Loading model Vazios...')
@@ -126,12 +122,12 @@ def classify_process():
     print('* Loading model Peso...')
     modeldict['peso'] = Peso()
     print('* Model peso loaded')
-    # print('* Loading model Retina BBox...')
-    # modeldict['retina'] = Retina()
-    # print('* Model Retina BBox loaded')
     print('* Loading model Naive BBox...')
     modeldict['naive'] = Naive()
     print('* Model naive bbox loaded')
+    print('* Loading model SSD BBox...')
+    modeldict['ssd'] = SSDMobileModel()
+    print('* Model SSD bbox loaded')
 
     # continually poll for new images to classify
     while True:
@@ -276,7 +272,8 @@ def teste():
                 temp.write(file.read())
             # print('content', file.read())
             image = Image.open(tempfile)
-            success, pred_bbox = read_model('naive', image)
+            # success, pred_bbox = read_model('naive', image)
+            success, pred_bbox = read_model('ssd', image)
             if success:
                 print(image.size)
                 print(pred_bbox)

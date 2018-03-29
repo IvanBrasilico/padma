@@ -1,6 +1,6 @@
 # from keras.applications import ResNet50, imagenet_utils
 
-from padma.models.bbox.bbox import NaiveModel, RetinaModel
+from padma.models.bbox.bbox import NaiveModel
 from padma.models.vazios.vazios import VazioModel
 from padma.models.peso.peso import PesoModel
 from padma.models.conteiner20e40.bbox import SSDMobileModel
@@ -48,11 +48,6 @@ class Vazios(ModelBase):
 class Peso(ModelBase):
     def __init__(self):
         self._model = PesoModel()
-
-
-class Retina(ModelBase):
-    def __init__(self):
-        self._model = RetinaModel()
 
 
 class Naive(ModelBase):

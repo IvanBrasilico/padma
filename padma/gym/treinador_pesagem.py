@@ -16,10 +16,7 @@ from bson.objectid import ObjectId
 from gridfs import GridFS
 from PIL import Image
 from pymongo import MongoClient
-from sklearn import linear_model
-from sklearn.metrics import explained_variance_score, mean_absolute_error, \
-    mean_squared_log_error
-from scipy import misc
+from sklearn.metrics import explained_variance_score, mean_absolute_error
 from ajna_commons.flask.conf import (DATABASE, MONGODB_URI)
 from ajna_commons.conf import ENCODE
 from padma.models.peso.peso import PesoModel
@@ -70,12 +67,16 @@ def make_histograms():
                     except FloatingPointError:
                         print('Floating point error')
                         pass
-        with open(HIST_FILE, 'wb') as out:
-            np.save(out, np.array(histograms))
-        with open(LABEL_FILE, 'wb') as out:
-            labels = np.array(labels)
-            np.save(out, labels)
+        save_histograms(histograms, labels)
+        labels = np.array(labels)
     return histograms, labels
+
+
+def save_histograms(histograms, labels):
+    with open(HIST_FILE, 'wb') as out:
+        np.save(out, np.array(histograms))
+    with open(LABEL_FILE, 'wb') as out:
+        np.save(out, labels)
 
 
 def load_histograms():
@@ -92,6 +93,7 @@ if __name__ == '__main__':
         histograms, labels = make_histograms()
     else:
         histograms, labels = load_histograms()
+    print(len(histograms), len(labels))
     # print(histograms)
     # print(labels)
     histograms_train = histograms[:800]
@@ -117,15 +119,15 @@ if __name__ == '__main__':
     new_histograms = []
     new_labels = []
     all_labels_predicted = modelclass.model.predict(histograms)
-    for peso, peso_pred, histo in zip(labels, all_labels_predicted,histograms):
+    for peso, peso_pred, histo in zip(labels, all_labels_predicted,
+                                      histograms):
         razao = abs(peso - peso_pred) / peso
-        if razao < .2:
+        if razao < .3:
             new_histograms.append(histo)
             new_labels.append(peso)
-    
+
     print(len(new_histograms), len(new_labels))
     cont = len(new_histograms)
-    
     histograms_train = new_histograms[:cont - 100]
     labels_train = new_labels[:cont - 100]
     histograms_test = new_histograms[-100:]
@@ -139,7 +141,4 @@ if __name__ == '__main__':
     print('média dos pesos', np.array(new_labels).mean())
     plt.scatter(labels_test, labels_predicted)
     plt.show()
-    
-    
-
-
+    save_histograms(new_histograms, new_labels)
