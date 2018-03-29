@@ -4,24 +4,25 @@ from sklearn import linear_model
 from scipy import misc
 import os
 
-n_bins = 32
+N_BINS = 32
+BASE_PATH = os.path.dirname(__file__)
+HIST_FILE = os.path.join(BASE_PATH, 'histograms_peso.npy')
+LABEL_FILE = os.path.join(BASE_PATH, 'labels_peso.npy')
 
 
 class PesoModel():
-    def __init__(self, bins=16, load=True):
+    def __init__(self, bins=N_BINS, load=True):
         self._bins = bins
         if load:
-            histograms = pickle.load(
-                open(os.path.join(os.path.dirname(__file__), '..', 'vazios',
-                                  'histograms.pkl'), 'rb'))
-            labels = pickle.load(
-                open(os.path.join(os.path.dirname(__file__), '..', 'vazios',
-                                  'labels.pkl'), 'rb'))
+            with open(HIST_FILE, 'rb') as pkl:
+                histograms = np.load(pkl)
+            with open(LABEL_FILE, 'rb') as pkl:
+                labels = np.load(pkl)
             self.model = linear_model.LinearRegression()
             self.model.fit(histograms, labels)
 
     def hist(self, img):
-        histo = np.histogram(img, bins=n_bins, density=True)
+        histo = np.histogram(img, bins=self._bins, density=True)
         return histo[0]
 
     def pesoimagem(self, file=None, image=None):
@@ -34,5 +35,4 @@ class PesoModel():
 
     def predict(self, image):
         peso = self.pesoimagem(image=image)
-        print('peso', peso[0])
         return {'peso': peso[0]}
