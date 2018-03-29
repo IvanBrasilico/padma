@@ -102,8 +102,8 @@ def run_inference_for_single_image(image, graph):
             #  so convert types as appropriate
             output_dict['num_detections'] = int(
                 output_dict['num_detections'][0])
-            output_dict['detection_classes'] = output_dict[
-                'detection_classes'][0].astype(np.uint8)
+            output_dict['detection_classes'] = [int(classe) for classe in
+                                                output_dict['detection_classes'][0]]
             output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
             output_dict['detection_scores'] = \
                 output_dict['detection_scores'][0]

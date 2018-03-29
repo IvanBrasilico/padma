@@ -150,9 +150,9 @@ def classify_process():
                         # image = base64_decode_image(q['image'], IMAGE_DTYPE)
                         # , (1, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANS))
                         d = pickle.loads(q)
-                        preds = model.predict(d['image'])
-                        output = model.format(preds)
-                        print('preds', preds)
+                        output = model.predict(d['image'])
+                        # output = model.format(preds)
+                        print('preds', output)
                         dump = json.dumps(output)
                         redisdb.set(d['id'], dump)
                         # remove the set of images from our queue
