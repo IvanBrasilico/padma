@@ -33,7 +33,7 @@ class TestModel(unittest.TestCase):
         preds = self.ssd.predict(self.image)
         print(preds)
         preds = preds[0]
-        assert preds['class'] == '2'
+        assert preds['class'] == 2
         assert abs(preds[0][0][0] - 25) < 5
         assert abs(preds[0][0][1] - 226) < 5
         assert abs(preds[0][0][2] - 204) < 5
