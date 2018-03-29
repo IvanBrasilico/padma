@@ -34,10 +34,10 @@ class TestModel(unittest.TestCase):
         print(preds)
         preds = preds[0]
         assert preds['class'] == 2
-        assert abs(preds[0][0][0] - 25) < 5
-        assert abs(preds[0][0][1] - 226) < 5
-        assert abs(preds[0][0][2] - 204) < 5
-        assert abs(preds[0][0][3] - 477) < 5
+        assert abs(preds['bbox'][0] - 25) < 5
+        assert abs(preds['bbox'][1] - 226) < 5
+        assert abs(preds['bbox'][2] - 204) < 5
+        assert abs(preds['bbox'][3] - 477) < 5
 
 
 if __name__ == '__main__':
