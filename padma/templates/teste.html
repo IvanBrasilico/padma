@@ -31,7 +31,8 @@
                 <h4>Resultados</h4>
                 <div class="table">
                     {% if result %}
-                    <img src='http://localhost:5002/static/temp.jpg' />
+                    <img src="/image/{{ filename }}" />
+                    <img src="/image_zoom/{{ filename }}" />
                     {% endif %}
                     <table class="inlineTable table table-striped table-bordered table-hover table-condensed table-responsive">
                         {% for item in result %}

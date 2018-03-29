@@ -8,6 +8,7 @@ import io
 import json
 import numpy as np
 import os
+import tempfile
 import time
 import uuid
 # from base64 import b64encode
@@ -15,7 +16,7 @@ import uuid
 from threading import Thread
 
 from flask import (abort, Flask, flash, jsonify, redirect, render_template,
-                   request, url_for)
+                   request, Response, send_file, url_for)
 # import redis
 from PIL import Image
 
@@ -49,6 +50,7 @@ IMAGE_DTYPE = 'float32'
 BATCH_SIZE = 10
 SERVER_SLEEP = 0.10
 CLIENT_SLEEP = 0.10
+tmpdir = tempfile.mkdtemp()
 
 
 app = Flask(__name__, static_url_path='/static')
@@ -242,6 +244,34 @@ def predict():
     return jsonify(data)
 
 
+@app.route('/image/<filename>')
+# @login_required
+def image(filename):
+    """Serializa a imagem do banco para stream HTTP."""
+
+    filename = os.path.join(tmpdir, filename)
+    image = open(filename, 'rb').read()
+    return Response(response=image, mimetype='image/jpeg')
+
+
+@app.route('/image_zoom/<filename>')
+# @login_required
+def image_zoom(filename):
+    """Serializa a imagem do banco para stream HTTP."""
+    filename = os.path.join(tmpdir, filename)
+    image = Image.open(filename)
+    success, pred_bbox = read_model('ssd', image)
+    if success:
+        coords = pred_bbox[0]['bbox']
+        im = np.asarray(image)
+        im = im[coords[0]:coords[2], coords[1]:coords[3]]
+        image = Image.fromarray(im)
+        img_io = io.BytesIO()
+        image.save(img_io, 'JPEG', quality=70)
+        img_io.seek(0)
+    return send_file(img_io, mimetype='image/jpeg')
+
+
 @app.route('/teste', methods=['GET', 'POST'])
 @csrf.exempt
 # TODO: Make login in all clients and tests, then uncomment next line
@@ -249,6 +279,7 @@ def predict():
 def teste():
     """Função simplificada para teste interativo de upload de imagem"""
     result = []
+    ts = ''
     print(request.method)
     print(request.form)
     import pprint
@@ -267,11 +298,13 @@ def teste():
         if file:  # and allowed_file(file.filename):
             print(file)
             # os.remove('padma/static/temp.jpg')
-            tempfile = 'padma/static/temp.jpg'
-            with open(tempfile, 'wb') as temp:
+            ts = str(time.time())
+            filename = os.path.join(tmpdir, ts + '.jpg')
+            print(filename)
+            with open(filename, 'wb') as temp:
                 temp.write(file.read())
             # print('content', file.read())
-            image = Image.open(tempfile)
+            image = Image.open(filename)
             # success, pred_bbox = read_model('naive', image)
             success, pred_bbox = read_model('ssd', image)
             if success:
@@ -288,7 +321,7 @@ def teste():
                 success, pred_vazio = read_model('peso', im)
                 result.append(json.dumps(pred_vazio))
 
-    return render_template('teste.html', result=result)
+    return render_template('teste.html', result=result, filename=ts + '.jpg')
 
 
 @nav.navigation()
