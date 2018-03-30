@@ -135,7 +135,8 @@ def evaluate(labels_test, labels_predicted,
 
     print('R2', r2_score(labels_test, labels_predicted))
     print('MAE', mean_absolute_error(labels_test, labels_predicted))
-    print('Média', labels_train.mean())
+    print('Média train', labels_train.mean())
+    print('Média test', labels_test.mean())
 
 
 def train_and_evaluate(histograms, labels):
