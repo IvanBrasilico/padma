@@ -17,9 +17,10 @@ from bson.objectid import ObjectId
 from gridfs import GridFS
 from PIL import Image
 from pymongo import MongoClient
+from sklearn.linear_model import LinearRegression, RANSACRegressor
 from sklearn.metrics import explained_variance_score, mean_absolute_error, \
     r2_score
-from sklearn.linear_model import LinearRegression, RANSACRegressor
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.ensemble import RandomForestRegressor
 from ajna_commons.flask.conf import (DATABASE, MONGODB_URI)
@@ -31,6 +32,8 @@ from padma.models.conteiner20e40.bbox import SSDMobileModel
 pesomodel = PesoModel()
 bboxmodel = NaiveModel()
 bboxmodel = SSDMobileModel()
+encoder = OneHotEncoder()
+encoder.fit([[i] for i in range(20)])
 
 BASE_PATH = os.path.dirname(__file__)
 HIST_FILE = os.path.join(BASE_PATH, 'histograms.npy')
@@ -50,7 +53,9 @@ def make_histograms():
         reader = csv.reader(csv_in)
         linha = next(reader)
         id_index = linha.index('id')
+        recinto_index = linha.index('recintoid')
         numero_index = linha.index('numero')
+        tara_index = linha.index('tara')
         peso_index = linha.index('peso')
         volume_index = linha.index('volume')
         for ind, linha in enumerate(reader):
@@ -81,9 +86,12 @@ def make_histograms():
                 with np.errstate(invalid='raise', divide='raise'):
                     try:
                         params = list(pesomodel.hist(im, n_bins=20))
+                        recinto = encoder.transform([[int(linha[recinto_index])]]).toarray()
+                        params.extend(recinto[0])
                         params.extend([(im.shape[1] / im.shape[0])])
                         histograms.append(params)
-                        labels.append((float(linha[peso_index]),
+                        labels.append((float(linha[peso_index]) +
+                                       float(linha[tara_index]),
                                        float(linha[volume_index])))
                     except FloatingPointError:
                         print('Floating point error')
@@ -131,8 +139,9 @@ def evaluate(labels_test, labels_predicted,
 
 
 def train_and_evaluate(histograms, labels):
+    print('----')
     cont = len(histograms)
-    print(cont)
+    print('número de exemplos', cont)
     train = (cont // 5 + 1) * 4
     test = (cont // 5 + 1)
     print(train, test)
@@ -157,7 +166,7 @@ def refine(histograms, labels_predicted, labels_test):
     for peso, peso_pred, histo in zip(pesos, all_labels_predicted,
                                       histograms):
         razao = abs(peso - peso_pred) / peso
-        if razao < .3:
+        if razao < .2:
             new_histograms.append(histo)
             new_labels.append(peso)
     return new_histograms, np.array(new_labels)
@@ -188,23 +197,29 @@ if __name__ == '__main__':
     # if histograms is None:
     if True:
         histograms, labels = make_histograms()
-        pesos = labels[:, 0]
+        pesos = np.array(labels[:, 0])
         volumes = labels[:, 1]
-
+    labels = pesos
+    print()
+    print(pesos.mean(), pesos.min(), pesos.max())
     refined_histo, refined_label = train_and_refine(histograms, pesos)
 
     print('Quadratic - Sem outliers')
+    cont = len(refined_histo)
+    print('número de exemplos', cont)
+    train = (cont // 5 + 1) * 4
+    test = (cont // 5 + 1)
+    print(train, test)
     quadratic = PolynomialFeatures(degree=2)
     histo_2 = quadratic.fit_transform(refined_histo)
     linear = LinearRegression()
-    linear.fit(histo_2[528:], refined_label[528:])
-    labels_predicted = linear.predict(histo_2[-132:])
-    labels_test = refined_label[-132:]
+    linear.fit(histo_2[:train], refined_label[:train])
+    labels_predicted = linear.predict(histo_2[-test:])
+    labels_test = refined_label[-test:]
     evaluate(labels_test, labels_predicted,
              labels_test, labels_predicted)
     plt.scatter(labels_test, labels_predicted)
     plt.show()
-
 
     print('RANSAC')
     ransac = RANSACRegressor(LinearRegression(), min_samples=100)
@@ -216,8 +231,6 @@ if __name__ == '__main__':
     plt.scatter(labels_test, labels_predicted)
     plt.show()
 
-
-
     print('Random Forest')
     forest = RandomForestRegressor()
     forest.fit(histograms[:800], labels[:800])
@@ -228,7 +241,18 @@ if __name__ == '__main__':
     plt.scatter(labels_test, labels_predicted)
     plt.show()
 
+    print('Random Forest sem outliers')
+    forest = RandomForestRegressor()
+    forest.fit(refined_histo[:train], refined_label[:train])
+    labels_predicted = forest.predict(refined_histo[-test:])
+    labels_test = refined_label[-test:]
+    evaluate(labels_test, labels_predicted,
+             labels_test, labels_predicted)
+    plt.scatter(labels_test, labels_predicted)
+    plt.show()
+
     # train_and_refine(histograms, volumes, 'volume')
+
 
     # Print outliers
     """for ind, peso in enumerate(labels_predicted):
