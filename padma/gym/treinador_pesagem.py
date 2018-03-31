@@ -23,6 +23,7 @@ from sklearn.metrics import explained_variance_score, mean_absolute_error, \
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from ajna_commons.flask.conf import (DATABASE, MONGODB_URI)
 from ajna_commons.conf import ENCODE
 from padma.models.peso.peso import PesoModel
@@ -96,8 +97,8 @@ def make_histograms():
                     except FloatingPointError:
                         print('Floating point error')
                         pass
-        save_histograms(histograms, labels)
         labels = np.array(labels)
+        save_histograms(histograms, labels[:, 0])
     return histograms, labels
 
 
@@ -126,7 +127,6 @@ def train():
 def evaluate(labels_test, labels_predicted,
              labels_train,
              labels_predicted_train):
-    print()
     print('Variance score', explained_variance_score(
         labels_test, labels_predicted))
 
@@ -137,12 +137,12 @@ def evaluate(labels_test, labels_predicted,
     print('MAE', mean_absolute_error(labels_test, labels_predicted))
     print('Média train', labels_train.mean())
     print('Média test', labels_test.mean())
+    print()
 
 
 def train_and_evaluate(histograms, labels):
     print('----')
     cont = len(histograms)
-    print('número de exemplos', cont)
     train = (cont // 5 + 1) * 4
     test = (cont // 5 + 1)
     print(train, test)
@@ -192,6 +192,8 @@ def train_and_refine(histograms, labels, prefix=''):
 
 
 if __name__ == '__main__':
+    histograms = None
+    labels = None
     histograms, labels = load_histograms()
     # TODO: Save labels for pesos and volumes
     pesos = labels
@@ -201,25 +203,10 @@ if __name__ == '__main__':
         volumes = labels[:, 1]
     labels = pesos
     print()
+    print('Média, min, max')
     print(pesos.mean(), pesos.min(), pesos.max())
+    print('Número de exemplos inicial:', len(histograms))
     refined_histo, refined_label = train_and_refine(histograms, pesos, 'refined')
-
-    print('Quadratic - Sem outliers')
-    cont = len(refined_histo)
-    print('número de exemplos', cont)
-    train = (cont // 5 + 1) * 4
-    test = (cont // 5 + 1)
-    print(train, test)
-    quadratic = PolynomialFeatures(degree=2)
-    histo_2 = quadratic.fit_transform(refined_histo)
-    linear = LinearRegression()
-    linear.fit(histo_2[:train], refined_label[:train])
-    labels_predicted = linear.predict(histo_2[-test:])
-    labels_test = refined_label[-test:]
-    evaluate(labels_test, labels_predicted,
-             labels_test, labels_predicted)
-    plt.scatter(labels_test, labels_predicted)
-    plt.show()
 
     print('RANSAC')
     ransac = RANSACRegressor(LinearRegression(), min_samples=100)
@@ -241,6 +228,26 @@ if __name__ == '__main__':
     plt.scatter(labels_test, labels_predicted)
     plt.show()
 
+    print()
+    print('RETIRANDO OUTLIERS')
+    cont = len(refined_histo)
+    print('número de exemplos', cont)
+    train = (cont // 5 + 1) * 4
+    test = (cont // 5 + 1)
+    print(train, test)
+    print('Quadratic - Sem outliers')
+    quadratic = PolynomialFeatures(degree=2)
+    histo_2 = quadratic.fit_transform(refined_histo)
+    linear = LinearRegression()
+    linear.fit(histo_2[:train], refined_label[:train])
+    labels_predicted = linear.predict(histo_2[-test:])
+    labels_test = refined_label[-test:]
+    evaluate(labels_test, labels_predicted,
+             labels_test, labels_predicted)
+    plt.scatter(labels_test, labels_predicted)
+    plt.show()
+
+
     print('Random Forest sem outliers')
     forest = RandomForestRegressor()
     forest.fit(refined_histo[:train], refined_label[:train])
@@ -250,6 +257,20 @@ if __name__ == '__main__':
              labels_test, labels_predicted)
     plt.scatter(labels_test, labels_predicted)
     plt.show()
+
+
+    params = {'n_estimators': 800, 'max_depth': 5, 'min_samples_split': 4,
+          'learning_rate': 0.02, 'loss': 'ls'}
+
+    forest = GradientBoostingRegressor(**params)
+    forest.fit(refined_histo[:train], refined_label[:train])
+    labels_predicted = forest.predict(refined_histo[-test:])
+    labels_test = refined_label[-test:]
+    evaluate(labels_test, labels_predicted,
+             labels_test, labels_predicted)
+    plt.scatter(labels_test, labels_predicted)
+    plt.show()
+
 
     # train_and_refine(histograms, volumes, 'volume')
 
