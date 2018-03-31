@@ -1,6 +1,8 @@
 import pickle
 import numpy as np
 from sklearn import linear_model
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import OneHotEncoder
 from scipy import misc
 import os
 
@@ -11,14 +13,19 @@ LABEL_FILE = os.path.join(BASE_PATH, 'labels.npy')
 
 
 class PesoModel():
-    def __init__(self, bins=N_BINS, load=True):
+    def __init__(self, bins=N_BINS, load=True, linear=False):
         self._bins = bins
+        if linear:
+            self.model = linear_model.LinearRegression()
+        else:
+            self.model = RandomForestRegressor()
+        self.encoder = OneHotEncoder()
+        self.encoder.fit([[i] for i in range(20)])
         if load:
             with open(HIST_FILE, 'rb') as pkl:
                 histograms = np.load(pkl)
             with open(LABEL_FILE, 'rb') as pkl:
                 labels = np.load(pkl)
-            self.model = linear_model.LinearRegression()
             self.model.fit(histograms, labels)
 
     def hist(self, img, n_bins=None):
@@ -31,8 +38,13 @@ class PesoModel():
         if file:
             image = misc.imread(file)
         params = list(self.hist(image, n_bins=20))
+        # TODO: get recinto_id
+        recintoid = 1
+        recinto = self.encoder.transform(
+            [[recintoid]]
+        ).toarray()
+        params.extend(recinto[0])
         params.extend([(image.shape[1] / image.shape[0])])
-
         return self.model.predict([params])
 
     def train(self, histograms, labels):

@@ -13,7 +13,7 @@ params = {'n_estimators': 500, 'max_depth': 5, 'min_samples_split': 5,
           'learning_rate': 0.02, 'loss': 'ls'}
 
 grid = [
-    ('Linear Ridge', linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])),
+    ('Linear Ridge', linear_model.RidgeCV(alphas=[0.1, 0.5, 1.0, 2.0])),
     ('Linear ', linear_model.LinearRegression()),
     ('Random Forest', RandomForestRegressor()),
     ('Gradient boosting',  GradientBoostingRegressor(**params))
