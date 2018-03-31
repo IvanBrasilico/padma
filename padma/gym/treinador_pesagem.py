@@ -109,13 +109,14 @@ def save_histograms(histograms, labels, sufix=''):
         np.save(out, labels)
 
 
-def load_histograms():
+def load_histograms(sufix=''):
     print('Loading histograms...')
-    if not os.path.exists(HIST_FILE):
+    print(HIST_FILE+sufix)
+    if not os.path.exists(HIST_FILE+sufix):
         return None, None
-    with open(HIST_FILE, 'rb') as pkl:
+    with open(HIST_FILE+sufix, 'rb') as pkl:
         histograms = np.load(pkl)
-    with open(LABEL_FILE, 'rb') as pkl:
+    with open(LABEL_FILE+sufix, 'rb') as pkl:
         labels = np.load(pkl)
     return histograms, labels
 
