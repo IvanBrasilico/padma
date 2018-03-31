@@ -192,18 +192,17 @@ def train_and_refine(histograms, labels, prefix=''):
 
 
 if __name__ == '__main__':
-    # histograms, labels = load_histograms()
+    histograms, labels = load_histograms()
     # TODO: Save labels for pesos and volumes
-    #pesos = labels
-    # if histograms is None:
-    if True:
+    pesos = labels
+    if histograms is None:
         histograms, labels = make_histograms()
         pesos = np.array(labels[:, 0])
         volumes = labels[:, 1]
     labels = pesos
     print()
     print(pesos.mean(), pesos.min(), pesos.max())
-    refined_histo, refined_label = train_and_refine(histograms, pesos)
+    refined_histo, refined_label = train_and_refine(histograms, pesos, 'refined')
 
     print('Quadratic - Sem outliers')
     cont = len(refined_histo)
