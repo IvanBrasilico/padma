@@ -46,8 +46,8 @@ class Vazios(ModelBase):
 
 
 class Peso(ModelBase):
-    def __init__(self):
-        self._model = PesoModel()
+    def __init__(self, linear=False):
+        self._model = PesoModel(linear)
 
 
 class Naive(ModelBase):
