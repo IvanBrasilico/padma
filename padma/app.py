@@ -29,15 +29,13 @@ from flask_wtf.csrf import CSRFProtect
 
 from ajna_commons.flask.conf import (SECRET, DATABASE, MONGODB_URI,
                                      redisdb)
-from ajna_commons.flask.login import (DBUser, authenticate, is_safe_url,
-                                      login_manager)
+import ajna_commons.flask.login as login
 # from ajna_commons.flask.log import logger
 
 from padma.models.models import Naive, Peso, Pong, Vazios
 from padma.models.conteiner20e40.bbox import SSDMobileModel
 
 from pymongo import MongoClient
-db = MongoClient(host=MONGODB_URI)[DATABASE]
 
 # initialize constants used to control image spatial dimensions and
 # data type
@@ -52,50 +50,15 @@ SERVER_SLEEP = 0.10
 CLIENT_SLEEP = 0.10
 tmpdir = tempfile.mkdtemp()
 
-
+# Configure app and DB Connection
+db = MongoClient(host=MONGODB_URI)[DATABASE]
 app = Flask(__name__, static_url_path='/static')
 csrf = CSRFProtect(app)
 Bootstrap(app)
 nav = Nav()
-
-
-# TODO: separate login logic
-
-login_manager.init_app(app)
-DBUser.dbsession = db
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('senha')
-        registered_user = authenticate(username, password)
-        if registered_user is not None:
-            print('Logged in..')
-            print(login_user(registered_user))
-            # print('Current user ', current_user)
-            next = request.args.get('next')
-            if not is_safe_url(next):
-                return abort(400)
-            return redirect(next or url_for('index'))
-        else:
-            return abort(401)
-    else:
-        return render_template('login.html', form=request.form)
-
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    next = request.args.get('next')
-    if not is_safe_url(next):
-        next = None
-    return redirect(next or url_for('index'))
-# 3
-##############################################
-# 33
+login.login_manager.init_app(app)
+login.configure(app)
+login.DBUser.dbsession = db
 
 
 def allowed_file(filename):
