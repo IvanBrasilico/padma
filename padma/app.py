@@ -132,7 +132,7 @@ def classify_process():
             time.sleep(SERVER_SLEEP)
 
 
-def read_model(model, image):
+def read_model(model: str, image: Image):
     print('Enter Sandman - sending request to queue')
     # generate an ID for the classification then add the
     # classification ID + image to the queue
