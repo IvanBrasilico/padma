@@ -46,7 +46,7 @@ IMAGE_DTYPE = 'float32'
 
 # initialize constants used for server queuing
 BATCH_SIZE = 10
-SERVER_SLEEP = 0.10
+SERVER_SLEEP = 0.05
 CLIENT_SLEEP = 0.10
 tmpdir = tempfile.mkdtemp()
 
@@ -273,6 +273,7 @@ def teste():
             image = Image.open(filename)
             # success, pred_bbox = read_model('naive', image)
             success, pred_bbox = read_model('ssd', image)
+            print(pred_bbox)
             if success:
                 print(image.size)
                 print(pred_bbox)
@@ -281,7 +282,8 @@ def teste():
                 coords = pred_bbox[0]['bbox']
                 im = np.asarray(image)
                 im = im[coords[0]:coords[2], coords[1]:coords[3]]
-                success, pred_vazio = read_model('vazio', im)
+                image = Image.fromarray(im)
+                success, pred_vazio = read_model('vazio', image)
                 print(pred_vazio)
                 result.append(json.dumps(pred_vazio))
                 success, pred_peso = read_model('peso', im)
