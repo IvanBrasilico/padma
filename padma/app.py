@@ -13,6 +13,7 @@ import time
 import uuid
 # from base64 import b64encode
 # from base64 import decodebytes
+from sys import platform
 from threading import Thread
 
 from flask import (abort, Flask, flash, jsonify, redirect, render_template,
@@ -97,42 +98,51 @@ def classify_process():
     modeldict['ssd'] = SSDMobileModel()
     print('* Model SSD bbox loaded')
 
-    # continually poll for new images to classify
-    while True:
-        # attempt to grab a batch of images from the database
-        for model_name, model in modeldict.items():
-            queue = redisdb.lrange(model_name, 0, BATCH_SIZE - 1)
-            # loop over the queue
-            if queue:
-                try:
-                    s0 = time.time()
-                    cont = 0
-                    print('Processing image classify from queue')
-                    for q in queue:
-                        cont += 1
-                        # deserialize the object and obtain the input image
+    if platform != 'win32':
+        # continually poll for new images to classify
+        while True:
+            # attempt to grab a batch of images from the database
+            for model_name, model in modeldict.items():
+                queue = redisdb.lrange(model_name, 0, BATCH_SIZE - 1)
+                # loop over the queue
+                if queue:
+                    try:
+                        s0 = time.time()
+                        cont = 0
+                        print('Processing image classify from queue')
+                        for q in queue:
+                            cont += 1
+                            # deserialize the object and obtain the input image
 
-                        # q = json.loads(q.decode('utf-8'))
-                        # image = bytes(q['image'], encoding='utf-8')
-                        # image = decodebytes(image)
-                        # image = base64_decode_image(q['image'], IMAGE_DTYPE)
-                        # , (1, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANS))
-                        d = pickle.loads(q)
-                        output = model.predict(d['image'])
-                        # output = model.format(preds)
-                        print('preds', output)
-                        dump = json.dumps(output)
-                        redisdb.set(d['id'], dump)
-                        # remove the set of images from our queue
-                    s1 = time.time()
-                    print('Images classified in ', s1 - s0)
-                finally:
-                    redisdb.ltrim(model_name, cont, -1)
-            # sleep for a small amount
-            time.sleep(SERVER_SLEEP)
+                            # q = json.loads(q.decode('utf-8'))
+                            # image = bytes(q['image'], encoding='utf-8')
+                            # image = decodebytes(image)
+                            # image = base64_decode_image(q['image'], IMAGE_DTYPE)
+                            # , (1, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANS))
+                            d = pickle.loads(q)
+                            output = model.predict(d['image'])
+                            # output = model.format(preds)
+                            print('preds', output)
+                            dump = json.dumps(output)
+                            redisdb.set(d['id'], dump)
+                            # remove the set of images from our queue
+                        s1 = time.time()
+                        print('Images classified in ', s1 - s0)
+                    finally:
+                        redisdb.ltrim(model_name, cont, -1)
+                # sleep for a small amount
+                time.sleep(SERVER_SLEEP)
 
+
+def win32_read_model(model, image):
+    """Síncrono, sem threads, para uso no desktop Windows."""
+    model = model_dict[model]
+    output = model.predict(d['image'])
+    return True, output
 
 def read_model(model, image):
+    if platform == 'win32':
+        return win32_read_model(model, image)
     print('Enter Sandman - sending request to queue')
     # generate an ID for the classification then add the
     # classification ID + image to the queue
@@ -317,9 +327,12 @@ if __name__ == '__main__':
     # load the function used to classify input images in a *separate*
     # thread than the one used for main classification
     print('* Starting model service...')
-    t = Thread(target=classify_process, args=())
-    t.daemon = True
-    t.start()
+    if platform != 'win32':
+        t = Thread(target=classify_process, args=())
+        t.daemon = True
+        t.start()
+    else:
+        classify_process()
 
     # start the web server
     print('* Starting web service...')
