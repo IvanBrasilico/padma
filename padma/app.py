@@ -46,8 +46,8 @@ IMAGE_DTYPE = 'float32'
 
 # initialize constants used for server queuing
 BATCH_SIZE = 10
-SERVER_SLEEP = 0.05
-CLIENT_SLEEP = 0.10
+SERVER_SLEEP = 0.04
+CLIENT_SLEEP = 0.06
 tmpdir = tempfile.mkdtemp()
 
 # Configure app and DB Connection
