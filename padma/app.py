@@ -47,8 +47,8 @@ IMAGE_DTYPE = 'float32'
 
 # initialize constants used for server queuing
 BATCH_SIZE = 10
-SERVER_SLEEP = 0.04
-CLIENT_SLEEP = 0.06
+SERVER_SLEEP = 0.05
+CLIENT_SLEEP = 0.05
 tmpdir = tempfile.mkdtemp()
 
 # Configure app and DB Connection
@@ -151,11 +151,13 @@ def read_model(model: str, image: Image):
          'image': image}
     redisdb.rpush(model, pickle.dumps(d))
     s0 = time.time()
+    cont = 0
     while True:
         # attempt to grab the output predictions
         output = redisdb.get(k)
         # check to see if our model has classified the input image
         if output is not None:
+            cont += 1
             # add the output predictions to our data
             # dictionary so we can return it to the client
             output = output.decode('utf-8')
@@ -169,9 +171,10 @@ def read_model(model: str, image: Image):
         time.sleep(CLIENT_SLEEP)
         s1 = time.time()
         if s1 - s0 > 5:  # Timeout
+            print("Timeout!!!!")
             redisdb.delete(k)
             return False, {}
-    return True, predictions
+    return True, predictions, cont
 
 
 def preprocess_image(image, prepare):
@@ -211,12 +214,12 @@ def predict():
             # indicate that the request was a success
             """
             image = Image.open(io.BytesIO(image.read()))
-            data['success'], data['predictions'] = read_model(model, image)
+            data['success'], data['predictions'], cont = read_model(model, image)
 
     # return the data dictionary as a JSON response
     if s0:
         s1 = time.time()
-        print(s1, 'Results read from queue and returned in ', s1 - s0)
+        print(cont, 'Results read from queue and returned in ', s1 - s0)
     return jsonify(data)
 
 
