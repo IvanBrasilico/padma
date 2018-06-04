@@ -75,6 +75,15 @@ def index():
     else:
         return redirect(url_for('login'))
 
+def model_predict(model, _id, image):
+    s0 = time.time()
+    output = model.predict(image)
+    print('preds', output)
+    dump = json.dumps(output)
+    redisdb.set(_id, dump)
+    s1 = time.time()
+    print('Images classified in ', s1 - s0)
+
 
 def classify_process():
     # Load the pre-trained models, only once.
@@ -107,40 +116,38 @@ def classify_process():
                 # loop over the queue
                 if queue:
                     try:
-                        s0 = time.time()
                         cont = 0
                         print('Processing image classify from queue')
                         for q in queue:
                             cont += 1
-                            # deserialize the object and obtain the input image
-
-                            # q = json.loads(q.decode('utf-8'))
-                            # image = bytes(q['image'], encoding='utf-8')
-                            # image = decodebytes(image)
-                            # image = base64_decode_image(q['image'], IMAGE_DTYPE)
-                            # , (1, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANS))
                             d = pickle.loads(q)
-                            output = model.predict(d['image'])
-                            # output = model.format(preds)
-                            print('preds', output)
-                            dump = json.dumps(output)
-                            redisdb.set(d['id'], dump)
-                            # remove the set of images from our queue
-                        s1 = time.time()
-                        print('Images classified in ', s1 - s0)
+                            # TODO: Rodar model em Thread
+                            t = Thread(target=model_predict, args=([model, d['id'], d['image']]))
+                            t.daemon = True
+                            t.start()
                     finally:
                         redisdb.ltrim(model_name, cont, -1)
                 # sleep for a small amount
                 time.sleep(SERVER_SLEEP)
 
 
-def win32_read_model(model, image):
+def win32_call_model(model, image):
     """Síncrono, sem threads, para uso no desktop Windows."""
     model = model_dict[model]
     output = model.predict(d['image'])
     return True, output
 
-def read_model(model: str, image: Image):
+def call_model(model: str, image: Image):
+    """Grava requisição no redisdb e aguarda retorno até timeout.
+        
+        Args:
+            model: string com uma chave do dicionário de modelos ativos
+            image: imagem em bytes a consultar
+
+        Returns:
+            True, dict com predições em caso de sucesso
+            False, dict vazio em caso de timeout
+    """
     if platform == 'win32':
         return win32_read_model(model, image)
     print('Enter Sandman - sending request to queue')
@@ -151,13 +158,13 @@ def read_model(model: str, image: Image):
          'image': image}
     redisdb.rpush(model, pickle.dumps(d))
     s0 = time.time()
-    cont = 0
+    # cont = 0
     while True:
         # attempt to grab the output predictions
         output = redisdb.get(k)
         # check to see if our model has classified the input image
         if output is not None:
-            cont += 1
+            # cont += 1
             # add the output predictions to our data
             # dictionary so we can return it to the client
             output = output.decode('utf-8')
@@ -174,7 +181,7 @@ def read_model(model: str, image: Image):
             print("Timeout!!!!")
             redisdb.delete(k)
             return False, {}
-    return True, predictions, cont
+    return True, predictions
 
 
 def preprocess_image(image, prepare):
@@ -214,12 +221,12 @@ def predict():
             # indicate that the request was a success
             """
             image = Image.open(io.BytesIO(image.read()))
-            data['success'], data['predictions'], cont = read_model(model, image)
+            data['success'], data['predictions'] = call_model(model, image)
 
     # return the data dictionary as a JSON response
     if s0:
         s1 = time.time()
-        print(cont, 'Results read from queue and returned in ', s1 - s0)
+        print('Results read from queue and returned in ', s1 - s0)
     return jsonify(data)
 
 
@@ -239,7 +246,7 @@ def image_zoom(filename):
     """Serializa a imagem do banco para stream HTTP."""
     filename = os.path.join(tmpdir, filename)
     image = Image.open(filename)
-    success, pred_bbox = read_model('ssd', image)
+    success, pred_bbox = call_model('ssd', image)
     if success:
         coords = pred_bbox[0]['bbox']
         im = np.asarray(image)
@@ -284,8 +291,8 @@ def teste():
                 temp.write(file.read())
             # print('content', file.read())
             image = Image.open(filename)
-            # success, pred_bbox = read_model('naive', image)
-            success, pred_bbox = read_model('ssd', image)
+            # success, pred_bbox = call_model('naive', image)
+            success, pred_bbox = call_model('ssd', image)
             print(pred_bbox)
             if success:
                 print(image.size)
@@ -296,12 +303,12 @@ def teste():
                 im = np.asarray(image)
                 im = im[coords[0]:coords[2], coords[1]:coords[3]]
                 image = Image.fromarray(im)
-                success, pred_vazio = read_model('vazio', image)
+                success, pred_vazio = call_model('vazio', image)
                 print(pred_vazio)
                 result.append(json.dumps(pred_vazio))
-                success, pred_peso = read_model('peso', im)
+                success, pred_peso = call_model('peso', im)
                 result.append(json.dumps(pred_peso))
-                success, pred_peso = read_model('pesor', im)
+                success, pred_peso = call_model('pesor', im)
                 result.append(json.dumps(pred_peso))
 
     return render_template('teste.html', result=result, filename=ts + '.jpg')
