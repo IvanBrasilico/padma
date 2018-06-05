@@ -52,4 +52,4 @@ class PesoModel():
 
     def predict(self, image):
         peso = self.pesoimagem(image=image)
-        return {'peso': peso[0]}
+        return [{'peso': peso[0]}]

@@ -149,7 +149,7 @@ def call_model(model: str, image: Image):
             False, dict vazio em caso de timeout
     """
     if platform == 'win32':
-        return win32_read_model(model, image)
+        return win32_call_model(model, image)
     print('Enter Sandman - sending request to queue')
     # generate an ID for the classification then add the
     # classification ID + image to the queue
