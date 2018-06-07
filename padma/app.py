@@ -31,12 +31,14 @@ from flask_wtf.csrf import CSRFProtect
 from ajna_commons.flask.conf import (SECRET, DATABASE, MONGODB_URI,
                                      redisdb)
 import ajna_commons.flask.login as login
-# from ajna_commons.flask.log import logger
+from ajna_commons.flask.log import logger
 
 from padma.models.models import Naive, Peso, Pong, Vazios
 from padma.models.conteiner20e40.bbox import SSDMobileModel
 
 from pymongo import MongoClient
+
+PADMA_REDIS_KEY = 'PADMAKEY01'
 
 # initialize constants used to control image spatial dimensions and
 # data type
@@ -47,8 +49,8 @@ IMAGE_DTYPE = 'float32'
 
 # initialize constants used for server queuing
 BATCH_SIZE = 10
-SERVER_SLEEP = 0.05
-CLIENT_SLEEP = 0.05
+SERVER_SLEEP = 0.10
+CLIENT_SLEEP = 0.10
 tmpdir = tempfile.mkdtemp()
 
 # Configure app and DB Connection
@@ -125,10 +127,14 @@ def classify_process():
                             t = Thread(target=model_predict, args=([model, d['id'], d['image']]))
                             t.daemon = True
                             t.start()
+                    except TypeError as err:
+                        logger.debug('Erro ao recuperar modelo %s' % model_name)
+                        logger.debug(str(q))
+                        logger.debug(err, exc_info=True)
                     finally:
                         redisdb.ltrim(model_name, cont, -1)
-                # sleep for a small amount
-                time.sleep(SERVER_SLEEP)
+            # sleep for a small amount
+            time.sleep(SERVER_SLEEP)
 
 
 def win32_call_model(model, image):
@@ -156,7 +162,7 @@ def call_model(model: str, image: Image):
     k = str(uuid.uuid4())
     d = {'id': k,
          'image': image}
-    redisdb.rpush(model, pickle.dumps(d))
+    redisdb.rpush(model, pickle.dumps(d, protocol=1))
     s0 = time.time()
     # cont = 0
     while True:
