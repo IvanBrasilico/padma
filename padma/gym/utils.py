@@ -41,7 +41,7 @@ def get_images(db, lista):
         imagens.append([im for im in get_imagens_recortadas(db, _id)])
     return imagens
 
-def monta_df(bins, inicio, fim):
+def monta_df(bins, inicio=None, fim=None, from_dir=None):
     """Conecta ao MongoDB, monta um dataframe com histograma e pesos.
     
     Conecta ao MongoDB, consulta imagens, recorta imagens,
@@ -51,25 +51,46 @@ def monta_df(bins, inicio, fim):
     Args:
         bins: número de bins do histograma
         inicio, fim: datas a filtrar no Banco ('YYYY-mm-dd')
+        from_dir: se fornecido, carrega de diretório ao invés do Banco de Dados
        
     Returns:
-        pandas dataframe
+        pandas dataframe, lista de imagens
     """
-    db = MongoClient(host=MONGODB_URI)[DATABASE]
-    cursor = get_lista(db, inicio, fim)
-    lista = [linha for linha in cursor]
-    images = get_images(db, lista)
-    pesos = []
-    for linha in lista:
-        carga = linha.get('metadata').get('carga')
-        if carga:
-            vazio = carga.get('vazio')
-            if vazio is False:
-                container = carga.get('container')
-                if container:
-                    tara = float(container[0].get('taracontainer').replace(',', '.'))
-                    peso = float(container[0].get('pesobrutoitem').replace(',', '.'))
+    if from_dir:
+        with open(os.path.join(from_dir, 'img_data.csv')) as csv_file:
+            reader = csv.reader(csv_file)
+            linha = next(reader)
+            index_id = linha.index('_id')
+            index_tara = linha.index('taracontainer')
+            index_peso = linha.index('pesobrutoitem')
+            pesos = []
+            images = []
+            for linha in reader:
+                try:
+                    tara = float(linha[index_tara].replace(',', '.'))
+                    peso = float(linha[index_peso].replace(',', '.'))
+                    imagem = linha[index_id]
                     pesos.append(tara + peso)
+                    images.append(open(os.path.join(from_dir, imagem), 'rb'))
+                except ValueError:
+                    pass
+
+    else:
+        db = MongoClient(host=MONGODB_URI)[DATABASE]
+        cursor = get_lista(db, inicio, fim)
+        lista = [linha for linha in cursor]
+        images = get_images(db, lista)
+        pesos = []
+        for linha in lista:
+            carga = linha.get('metadata').get('carga')
+            if carga:
+                vazio = carga.get('vazio')
+                if vazio is False:
+                    container = carga.get('container')
+                    if container:
+                        tara = float(container[0].get('taracontainer').replace(',', '.'))
+                        peso = float(container[0].get('pesobrutoitem').replace(',', '.'))
+                        pesos.append(tara + peso)
     histograms = [np.histogram(np.asarray(image[0]), bins=bins)[0] for image in images]
     df = pd.DataFrame(histograms)
     df.columns = np.histogram(np.asarray(images[0][0]), bins=16)[1][1:]
