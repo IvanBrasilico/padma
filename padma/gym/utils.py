@@ -5,7 +5,6 @@ import os
 import sys
 from datetime import datetime, timedelta
 
-
 import matplotlib.pyplot as plt
 from PIL import Image
 from pymongo import MongoClient
@@ -41,7 +40,7 @@ def get_images(db, lista):
         imagens.append([im for im in get_imagens_recortadas(db, _id)])
     return imagens
 
-def monta_df(bins, inicio=None, fim=None, from_dir=None):
+def monta_df(bins, inicio=None, fim=None, from_dir=None, max_rows=1000):
     """Conecta ao MongoDB, monta um dataframe com histograma e pesos.
     
     Conecta ao MongoDB, consulta imagens, recorta imagens,
@@ -65,13 +64,17 @@ def monta_df(bins, inicio=None, fim=None, from_dir=None):
             index_peso = linha.index('pesobrutoitem')
             pesos = []
             images = []
-            for linha in reader:
+
+            for index, linha in enumerate(reader):
                 try:
                     tara = float(linha[index_tara].replace(',', '.'))
                     peso = float(linha[index_peso].replace(',', '.'))
-                    imagem = linha[index_id]
+                    image_name = linha[index_id] + '_0'
                     pesos.append(tara + peso)
-                    images.append(open(os.path.join(from_dir, imagem), 'rb'))
+                    imagem = Image.open(os.path.join(from_dir, image_name))
+                    images.append([imagem])
+                    if index >= max_rows:
+                        break
                 except ValueError:
                     pass
 
