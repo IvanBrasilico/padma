@@ -6,7 +6,7 @@ import numpy as np
 
 BINS = 16
 DIR = r'D:\Users\25052288840\Downloads\imgs'
-MAX_ROWS = 500
+MAX_ROWS = 8000
 
 df, imagens = monta_df(BINS, from_dir=DIR, max_rows=MAX_ROWS)
 print(df.head())

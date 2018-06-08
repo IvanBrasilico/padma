@@ -72,7 +72,8 @@ def monta_df(bins, inicio=None, fim=None, from_dir=None, max_rows=1000):
                     image_name = linha[index_id] + '_0'
                     pesos.append(tara + peso)
                     imagem = Image.open(os.path.join(from_dir, image_name))
-                    images.append([imagem])
+                    images.append([np.asarray(imagem)])
+                    del imagem
                     if index >= max_rows:
                         break
                 except ValueError:
