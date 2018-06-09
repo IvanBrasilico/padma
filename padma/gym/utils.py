@@ -23,14 +23,14 @@ sys.path.insert(0, '../../virasana/')
 ENCONTRADOS = {'metadata.carga.atracacao.escala': {'$ne': None},
                'metadata.contentType': 'image/jpeg'}
 
-def get_lista(db, start, end):
+def get_lista(db, start, end, vazio):
     filtro = ENCONTRADOS
     filtro['metadata.predictions.bbox'] = {'$exists': True, '$ne': None}
     filtro['metadata.dataescaneamento'] = {
         '$gt': datetime.strptime(start, '%Y-%m-%d'),
         '$lt': datetime.strptime(end, '%Y-%m-%d')
     }
-    filtro['metadata.carga.vazio'] = False
+    filtro['metadata.carga.vazio'] = vazio
     return db['fs.files'].find(filtro)
 
 def get_images(db, lista):
@@ -40,7 +40,7 @@ def get_images(db, lista):
         imagens.append([im for im in get_imagens_recortadas(db, _id)])
     return imagens
 
-def monta_df(bins, inicio=None, fim=None, from_dir=None, max_rows=1000):
+def monta_df(bins, inicio=None, fim=None, from_dir=None, max_rows=1000, vazio=False):
     """Conecta ao MongoDB, monta um dataframe com histograma e pesos.
     
     Conecta ao MongoDB, consulta imagens, recorta imagens,
@@ -81,7 +81,7 @@ def monta_df(bins, inicio=None, fim=None, from_dir=None, max_rows=1000):
 
     else:
         db = MongoClient(host=MONGODB_URI)[DATABASE]
-        cursor = get_lista(db, inicio, fim)
+        cursor = get_lista(db, inicio, fim, vazio)
         lista = [linha for linha in cursor]
         images = get_images(db, lista)
         pesos = []
@@ -89,16 +89,30 @@ def monta_df(bins, inicio=None, fim=None, from_dir=None, max_rows=1000):
             carga = linha.get('metadata').get('carga')
             if carga:
                 vazio = carga.get('vazio')
-                if vazio is False:
-                    container = carga.get('container')
-                    if container:
+                container = carga.get('container')
+                if container:
+                    if vazio is False:
                         tara = float(container[0].get('taracontainer').replace(',', '.'))
-                        peso = float(container[0].get('pesobrutoitem').replace(',', '.'))
-                        pesos.append(tara + peso)
+                        peso = float(container[0].get('pesobrutoitem', '0').replace(',', '.'))
+                        if container[0].get('indicadorusoparcial') == 's':
+                            for cont in container[1:]:
+                                peso += float(container[0].get(
+                                             'pesobrutoitem', '0').replace(',', '.'))
+                    else:
+                        tara = float(container[0].get('tara(kg)').replace(',', '.'))
+                        peso = 0
+                    pesos.append(tara + peso)
     histograms = [np.histogram(np.asarray(image[0]), bins=bins)[0] for image in images]
     df = pd.DataFrame(histograms)
     df.columns = np.histogram(np.asarray(images[0][0]), bins=16)[1][1:]
-    df['peso'] = pesos
+    if len(pesos) == len(df):
+        df['peso'] = pesos
+    else:
+        print('''Pesos não puderam ser recuperados.
+              Se não for uma extração de vazios, deve haver erro na base
+              ''')
+        print('Número de pesos: %d. Número de imagens: %d' % 
+              (len(pesos), len(df)))
     return df, images
 
 

@@ -3,6 +3,7 @@ from PIL import Image
 from padma.models.bbox.bbox import NaiveModel
 from padma.models.vazios.vazios import VazioModel
 from padma.models.peso.peso import PesoModel
+from padma.models.peso.peso2 import PesoModel2
 from padma.models.conteiner20e40.bbox import SSDMobileModel
 
 
@@ -35,6 +36,9 @@ class Peso(ModelBase):
     def __init__(self, linear=False):
         self._model = PesoModel(linear)
 
+class Peso2(ModelBase):
+    def __init__(self):
+        self._model = PesoModel2()
 
 class Naive(ModelBase):
     def __init__(self):
