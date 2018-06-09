@@ -23,9 +23,9 @@ class PesoModel2():
             self.model.fit(histograms, labels)
 
     def hist(self, img):
-        histo = np.histogram(np.asarray(img[0]), bins=self._bins)
-        return histo[0]
+        histo = np.histogram(img, bins=self._bins)
+        return histo[0][:N_BINS - 1]
 
     def predict(self, image):
-        peso = self.model.predict(self.hist(image))
+        peso = self.model.predict([self.hist(image)])
         return [{'peso': peso[0]}]

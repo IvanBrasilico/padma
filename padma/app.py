@@ -33,7 +33,7 @@ from ajna_commons.flask.conf import (SECRET, DATABASE, MONGODB_URI,
 import ajna_commons.flask.login as login
 from ajna_commons.flask.log import logger
 
-from padma.models.models import Naive, Peso, Pong, Vazios
+from padma.models.models import Naive, Peso, Peso2, Pong, Vazios
 from padma.models.conteiner20e40.bbox import SSDMobileModel
 
 from pymongo import MongoClient
@@ -96,12 +96,15 @@ def classify_process():
     print('* Loading model Vazios...')
     modeldict['vazio'] = Vazios()
     print('* Model vazios loaded')
-    print('* Loading model Peso...')
-    modeldict['peso'] = Peso(linear=True)
+    print('* Loading model Peso Linear (pesol)...')
+    modeldict['pesol'] = Peso(linear=True)
     print('* Model peso loaded')
-    print('* Loading model Peso Random Forest...')
+    print('* Loading model Peso Random Forest (pesor) ...')
     modeldict['pesor'] = Peso()
     print('* Model peso random forest loaded')
+    print('* Loading model Peso Random Forest 2 (peso)...')
+    modeldict['peso'] = Peso2()
+    print('* Model peso random forest 2 loaded')
     print('* Loading model Naive BBox...')
     modeldict['naive'] = Naive()
     print('* Model naive bbox loaded')
