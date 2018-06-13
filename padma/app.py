@@ -3,27 +3,25 @@
 #  model, params
 # Returns
 #   JSON dict with model response
-import pickle
 import io
 import json
 import numpy as np
 import os
+import pickle
 import tempfile
 import time
 import uuid
 # from base64 import b64encode
 # from base64 import decodebytes
 from sys import platform
-from threading import Thread
 
-from flask import (abort, Flask, flash, jsonify, redirect, render_template,
+from flask import (Flask, flash, jsonify, redirect, render_template,
                    request, Response, send_file, url_for)
 # import redis
 from PIL import Image
 
 from flask_bootstrap import Bootstrap
 from flask_login import current_user, login_required
-from flask_login import login_user, logout_user
 from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 from flask_wtf.csrf import CSRFProtect
@@ -31,10 +29,7 @@ from flask_wtf.csrf import CSRFProtect
 from ajna_commons.flask.conf import (SECRET, DATABASE, MONGODB_URI,
                                      redisdb)
 import ajna_commons.flask.login as login
-from ajna_commons.flask.log import logger
-
-from padma.models.models import Naive, Peso, Peso2, Pong, Vazios
-from padma.models.conteiner20e40.bbox import SSDMobileModel
+# from ajna_commons.flask.log import logger
 
 from pymongo import MongoClient
 
@@ -48,9 +43,8 @@ IMAGE_CHANS = 3
 IMAGE_DTYPE = 'float32'
 
 # initialize constants used for server queuing
-BATCH_SIZE = 10
-SERVER_SLEEP = 0.10
-CLIENT_SLEEP = 0.10
+CLIENT_SLEEP = 0.10  # segundos
+CLIENT_TIMEOUT = 10  # segundos
 tmpdir = tempfile.mkdtemp()
 
 # Configure app and DB Connection
@@ -70,6 +64,7 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[-1].lower() in ['jpg']
 
 
+@login_required
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -77,81 +72,21 @@ def index():
     else:
         return redirect(url_for('login'))
 
-def model_predict(model, _id, image):
-    s0 = time.time()
-    output = model.predict(image)
-    print('preds', output)
-    dump = json.dumps(output)
-    redisdb.set(_id, dump)
-    s1 = time.time()
-    print('Images classified in ', s1 - s0)
-
-
-def classify_process():
-    # Load the pre-trained models, only once.
-    # Then wait for incoming queries on redis
-    modeldict = dict()
-    print('* Loading model PONG (ping-pong test if alive) *')
-    modeldict['ping'] = Pong()
-    print('* Loading model Vazios...')
-    modeldict['vazio'] = Vazios()
-    print('* Model vazios loaded')
-    print('* Loading model Peso Linear (pesol)...')
-    modeldict['pesol'] = Peso(linear=True)
-    print('* Model peso loaded')
-    print('* Loading model Peso Random Forest (pesor) ...')
-    modeldict['pesor'] = Peso()
-    print('* Model peso random forest loaded')
-    print('* Loading model Peso Random Forest 2 (peso)...')
-    modeldict['peso'] = Peso2()
-    print('* Model peso random forest 2 loaded')
-    print('* Loading model Naive BBox...')
-    modeldict['naive'] = Naive()
-    print('* Model naive bbox loaded')
-    print('* Loading model SSD BBox...')
-    modeldict['ssd'] = SSDMobileModel()
-    print('* Model SSD bbox loaded')
-
-    if platform != 'win32':
-        # continually poll for new images to classify
-        while True:
-            # attempt to grab a batch of images from the database
-            for model_name, model in modeldict.items():
-                queue = redisdb.lrange(model_name, 0, BATCH_SIZE - 1)
-                # loop over the queue
-                if queue:
-                    try:
-                        cont = 0
-                        print('Processing image classify from queue')
-                        for q in queue:
-                            cont += 1
-                            d = pickle.loads(q)
-                            # TODO: Rodar model em Thread
-                            t = Thread(target=model_predict, args=([model, d['id'], d['image']]))
-                            t.daemon = True
-                            t.start()
-                    except TypeError as err:
-                        logger.debug('Erro ao recuperar modelo %s' % model_name)
-                        logger.debug(str(q))
-                        logger.debug(err, exc_info=True)
-                    finally:
-                        redisdb.ltrim(model_name, cont, -1)
-            # sleep for a small amount
-            time.sleep(SERVER_SLEEP)
-
 
 def win32_call_model(model, image):
     """Síncrono, sem threads, para uso no desktop Windows."""
+    from modelserver import model_dict
     model = model_dict[model]
-    output = model.predict(d['image'])
+    output = model.predict(image)
     return True, output
+
 
 def call_model(model: str, image: Image):
     """Grava requisição no redisdb e aguarda retorno até timeout.
-        
+
         Args:
             model: string com uma chave do dicionário de modelos ativos
-            image: imagem em bytes a consultar
+            image: PIL Image
 
         Returns:
             True, dict com predições em caso de sucesso
@@ -160,34 +95,26 @@ def call_model(model: str, image: Image):
     if platform == 'win32':
         return win32_call_model(model, image)
     print('Enter Sandman - sending request to queue')
-    # generate an ID for the classification then add the
-    # classification ID + image to the queue
+    # generate an ID then add the ID + image to the queue
     k = str(uuid.uuid4())
     d = {'id': k,
          'image': image}
     redisdb.rpush(model, pickle.dumps(d, protocol=1))
     s0 = time.time()
-    # cont = 0
     while True:
         # attempt to grab the output predictions
         output = redisdb.get(k)
         # check to see if our model has classified the input image
         if output is not None:
-            # cont += 1
-            # add the output predictions to our data
-            # dictionary so we can return it to the client
             output = output.decode('utf-8')
             predictions = json.loads(output)
-            # delete the result from the database and break
-            # from the polling loop
+            # delete the result from the database and exit loop
             redisdb.delete(k)
             break
-        # sleep for a small amount to give the model a chance
-        # to classify the input image
         time.sleep(CLIENT_SLEEP)
         s1 = time.time()
-        if s1 - s0 > 5:  # Timeout
-            print("Timeout!!!!")
+        if s1 - s0 > CLIENT_TIMEOUT:  # Timeout
+            print('Timeout!!!!')
             redisdb.delete(k)
             return False, {}
     return True, predictions
@@ -347,6 +274,7 @@ app.config['SECRET_KEY'] = SECRET
 if __name__ == '__main__':
     # load the function used to classify input images in a *separate*
     # thread than the one used for main classification
+    """
     print('* Starting model service...')
     if platform != 'win32':
         t = Thread(target=classify_process, args=())
@@ -354,7 +282,7 @@ if __name__ == '__main__':
         t.start()
     else:
         classify_process()
-
+    """
     # start the web server
     print('* Starting web service...')
     app.config['DEBUG'] = True

@@ -1,10 +1,10 @@
-from PIL import Image
-
 from padma.models.bbox.bbox import NaiveModel
 from padma.models.vazios.vazios import VazioModel
 from padma.models.peso.peso import PesoModel
 from padma.models.peso.peso2 import PesoModel2
 from padma.models.conteiner20e40.bbox import SSDMobileModel
+from padma.models.encoder.encoder import EncoderModel
+from PIL import Image
 
 
 class ModelBase():
@@ -36,9 +36,11 @@ class Peso(ModelBase):
     def __init__(self, linear=False):
         self._model = PesoModel(linear)
 
+
 class Peso2(ModelBase):
     def __init__(self):
         self._model = PesoModel2()
+
 
 class Naive(ModelBase):
     def __init__(self):
@@ -48,3 +50,8 @@ class Naive(ModelBase):
 class SSD(ModelBase):
     def __init__(self):
         self._model = SSDMobileModel()
+
+
+class Encoder(ModelBase):
+    def __init__(self):
+        self._model = EncoderModel()

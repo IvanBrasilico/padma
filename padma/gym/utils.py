@@ -23,15 +23,20 @@ sys.path.insert(0, '../../virasana/')
 ENCONTRADOS = {'metadata.carga.atracacao.escala': {'$ne': None},
                'metadata.contentType': 'image/jpeg'}
 
-def get_lista(db, start, end, vazio):
+def get_lista(db, start, end, vazio=None, max_linhas=None):
     filtro = ENCONTRADOS
     filtro['metadata.predictions.bbox'] = {'$exists': True, '$ne': None}
     filtro['metadata.dataescaneamento'] = {
         '$gt': datetime.strptime(start, '%Y-%m-%d'),
         '$lt': datetime.strptime(end, '%Y-%m-%d')
     }
-    filtro['metadata.carga.vazio'] = vazio
-    return db['fs.files'].find(filtro)
+    if isinstance(vazio, bool):
+        filtro['metadata.carga.vazio'] = vazio
+    cursor = db['fs.files'].find(filtro)
+    if max_linhas:
+        cursor.limit(max_linhas)
+    return cursor
+
 
 def get_images(db, lista):
     imagens = []
@@ -115,7 +120,6 @@ def monta_df(bins, inicio=None, fim=None, from_dir=None, max_rows=1000, vazio=Fa
               (len(pesos), len(df)))
     return df, images
 
-
 def reg_plot(model, X_test, y_test):
     # Make predictions using the testing set
     y_pred = model.predict(X_test)
@@ -159,3 +163,24 @@ def df_plot(df, max_images):
 
     for i in range(bins):
         print(i, np.corrcoef(df[df.columns[i]], df['peso']))
+
+        
+        
+def monta_lista_ids_e_imagens(inicio, fim, max_linhas=100):
+    db = MongoClient(host=MONGODB_URI)[DATABASE]
+    cursor = get_lista(db, inicio, fim, max_linhas)
+    lista = [linha for linha in cursor]
+    images = get_images(db, lista)
+    _ids = [linha['_id'] for linha in lista]
+    return _ids, images
+
+def view_imagens(imagens):
+    plt.gray()
+    fig=plt.figure(figsize=(16, 20))
+    columns = 4
+    rows = 4
+    for i in range(1, columns*rows +1):
+        img = imagens[i - 1]
+        ax = fig.add_subplot(rows, columns, i)
+        plt.imshow(img)
+    plt.show()

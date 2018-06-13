@@ -1,4 +1,3 @@
-import pickle
 import numpy as np
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor
