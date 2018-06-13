@@ -25,13 +25,14 @@ ENCONTRADOS = {'metadata.carga.atracacao.escala': {'$ne': None},
 
 def get_lista(db, start, end, vazio=None, max_linhas=None):
     filtro = ENCONTRADOS
-    filtro['metadata.predictions.bbox'] = {'$exists': True, '$ne': None}
+    filtro['metadata.predictions.bbox'] = {'$exists': True}
     filtro['metadata.dataescaneamento'] = {
         '$gt': datetime.strptime(start, '%Y-%m-%d'),
         '$lt': datetime.strptime(end, '%Y-%m-%d')
     }
     if isinstance(vazio, bool):
         filtro['metadata.carga.vazio'] = vazio
+    print(filtro)
     cursor = db['fs.files'].find(filtro)
     if max_linhas:
         cursor.limit(max_linhas)

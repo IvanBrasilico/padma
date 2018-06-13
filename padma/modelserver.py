@@ -16,12 +16,20 @@ SERVER_SLEEP = 0.10
 
 def model_predict(model, _id, image):
     s0 = time.time()
-    output = model.predict(image)
-    print('preds', output)
-    dump = json.dumps(output)
-    redisdb.set(_id, dump)
-    s1 = time.time()
-    print('Images classified in ', s1 - s0)
+    try:
+        output = model.predict(image)
+        # print('preds', output)
+        dump = json.dumps(output)
+        redisdb.set(_id, dump)
+        s1 = time.time()
+        print('Images classified in ', s1 - s0)
+    except Exception as err:
+        logger.debug('Erro em model_predict %s' %  str(model))
+        logger.debug(str(_id))
+        logger.error(err, exc_info=True)
+        output = {'success': False}
+        dump = json.dumps(output)
+        redisdb.set(_id, dump)
 
 
 def classify_process():
@@ -71,12 +79,19 @@ def classify_process():
                                 [model, d['id'], d['image']]))
                             t.daemon = True
                             t.start()
-                    except TypeError as err:
+                    except Exception as err:
                         logger.debug('Erro ao recuperar modelo %s' %
                                      model_name)
                         logger.debug(str(q))
-                        logger.debug(err, exc_info=True)
+                        logger.error(err, exc_info=True)
+                        output = {'success': False}
+                        dump = json.dumps(output)
+                        redisdb.set(d['id'], dump)
                     finally:
                         redisdb.ltrim(model_name, cont, -1)
             # sleep for a small amount
             time.sleep(SERVER_SLEEP)
+
+
+if __name__ == '__main__':
+    classify_process()
