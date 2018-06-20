@@ -1,8 +1,9 @@
 from padma.models.bbox.bbox import NaiveModel
 from padma.models.vazios.vazios import VazioModel
+from padma.models.vazios.vazio2 import VazioSVMModel
 from padma.models.peso.peso import PesoModel
 from padma.models.peso.peso2 import PesoModel2
-# from padma.models.conteiner20e40.bbox import SSDMobileModel
+from padma.models.conteiner20e40.bbox import SSDMobileModel
 from padma.models.encoder.encoder import EncoderModel
 from PIL import Image
 
@@ -55,3 +56,8 @@ class SSD(ModelBase):
 class Encoder(ModelBase):
     def __init__(self):
         self._model = EncoderModel()
+
+
+class VazioSVM(ModelBase):
+    def __init__(self):
+        self._model = VazioSVMModel()

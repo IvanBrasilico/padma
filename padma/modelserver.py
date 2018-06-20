@@ -7,7 +7,8 @@ from sys import platform
 from ajna_commons.flask.conf import (redisdb)
 from ajna_commons.flask.log import logger
 
-from padma.models.models import (Encoder, Naive, Peso, Peso2, Pong, Vazios)
+from padma.models.models import (Encoder, Naive, Peso, Peso2, Pong, Vazios,
+                                 VazioSVM)
 from padma.models.conteiner20e40.bbox import SSDMobileModel
 
 BATCH_SIZE = 10
@@ -24,7 +25,7 @@ def model_predict(model, _id, image):
         s1 = time.time()
         print('Images classified in ', s1 - s0)
     except Exception as err:
-        logger.debug('Erro em model_predict %s' %  str(model))
+        logger.debug('Erro em model_predict %s' % str(model))
         logger.debug(str(_id))
         logger.error(err, exc_info=True)
         output = {'success': False}
@@ -59,6 +60,9 @@ def classify_process():
     print('* Loading model Indexador(index)...')
     modeldict['index'] = Encoder()
     print('* Model Index loaded')
+    print('* Loading model Vazio SVM(vaziosvm)...')
+    modeldict['vaziosvm'] = VazioSVM()
+    print('* Model Vazio SVM loaded')
 
     if platform != 'win32':
         # continually poll for new images to classify

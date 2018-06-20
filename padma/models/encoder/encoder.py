@@ -2,7 +2,6 @@ import numpy as np
 import os
 from keras.models import load_model, Model
 from PIL import Image
-from keras.backend import clear_session
 import tensorflow as tf
 
 BASE_PATH = os.path.dirname(__file__)

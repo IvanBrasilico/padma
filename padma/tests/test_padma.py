@@ -6,7 +6,8 @@ import unittest
 from io import BytesIO
 from threading import Thread
 
-from padma.app import app, classify_process
+from padma.app import app
+from padma.modelserver import classify_process
 
 TEST_IMAGE = os.path.join(os.path.dirname(__file__), 'test.png')
 CHEIO_IMAGE = os.path.join(os.path.dirname(__file__), 'cheio.jpg')

@@ -5,6 +5,7 @@ import unittest
 from PIL import Image
 
 from padma.models.vazios.vazios import VazioModel
+from padma.models.vazios.vazio2 import VazioSVMModel
 
 VAZIO_IMAGE = os.path.join(os.path.dirname(__file__), 'vazio.jpg')
 CHEIO_IMAGE = os.path.join(os.path.dirname(__file__), 'cheio.jpg')
@@ -15,6 +16,7 @@ class TestModel(unittest.TestCase):
         self.vazio = Image.open(VAZIO_IMAGE)
         self.cheio = Image.open(CHEIO_IMAGE)
         self.model = VazioModel()
+        self.model2 = VazioSVMModel()
 
     def tearDown(self):
         pass
@@ -48,3 +50,14 @@ class TestModel(unittest.TestCase):
         assert 'NÃO' in desc
         desc = self.model.vaziooucheiodescritivo(image=self.vazio)
         assert 'NÃO' not in desc
+
+    def test_vazio2(self):
+        preds = self.model2.predict(image=self.vazio)
+        print(preds)
+        assert preds[0]['naovazio'] == 0
+
+
+    def test_cheio2(self):
+        preds = self.model2.predict(image=self.cheio)
+        print(preds)
+        assert preds[0]['naovazio'] == 1
