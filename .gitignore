@@ -142,5 +142,9 @@ padma/gym/histograms_peso.pkl
 padma/gym/labels_peso.pkl
 temp.jpg
 padma/gym/images/*
+padma/gym/Vazio2.0/vazios*
+padma/gym/Vazio2.0/naovazios*
 padma/gym/_ids.npy
 padma/gym/indexes.npy
+*.pkl
+
