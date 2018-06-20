@@ -56,7 +56,6 @@ class TestModel(unittest.TestCase):
         print(preds)
         assert preds[0]['naovazio'] == 0
 
-
     def test_cheio2(self):
         preds = self.model2.predict(image=self.cheio)
         print(preds)
