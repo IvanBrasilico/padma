@@ -24,6 +24,8 @@ class VazioSVMModel():
         return image_array
 
     def predict(self, image: Image):
-        # Este modelo retorna somente 0 para vazio e 1 para não vazio
-        naovazio = self.model.predict([self.image_prepare(image)])
-        return [{'naovazio': naovazio}]
+        # O modelo SVM foi treinado em classificação binária
+        # 0 para vazio e 1 para não vazio
+        y = self.model.predict([self.image_prepare(image)]).tolist()
+        vazio = [{'vazio': y_ == 0} for y_ in y]
+        return vazio

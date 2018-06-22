@@ -240,7 +240,8 @@ def teste():
                 im = im[coords[0]:coords[2], coords[1]:coords[3]]
                 image = Image.fromarray(im)
                 success, pred_vazio = call_model('vazio', image)
-                print(pred_vazio)
+                result.append(json.dumps(pred_vazio))
+                success, pred_vazio = call_model('vaziosvm', image)
                 result.append(json.dumps(pred_vazio))
                 success, pred_peso = call_model('peso', im)
                 result.append(json.dumps(pred_peso))

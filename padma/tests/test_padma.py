@@ -98,3 +98,31 @@ class FlaskTestCase(unittest.TestCase):
             content_type='multipart/form-data', data=data)
         print(rv.data)
         assert rv.data is not None
+
+    def test_prediction_Vazio2(self):
+        image = open(VAZIO_IMAGE, 'rb').read()
+        data = {}
+        data['image'] = (BytesIO(image), 'image')
+        rv = self.app.post(
+            '/predict?model=vaziosvm',
+            content_type='multipart/form-data', data=data)
+        test_dict = json.loads(rv.data.decode())
+        assert test_dict.get('success') is not None
+        assert test_dict.get('success') is True
+        assert test_dict.get('predictions') is not None
+        print(test_dict.get('predictions'))
+        assert test_dict.get('predictions')[0].get('vazio') is True
+
+    def test_prediction_Cheio2(self):
+        image = open(CHEIO_IMAGE, 'rb').read()
+        data = {}
+        data['image'] = (BytesIO(image), 'image')
+        rv = self.app.post(
+            '/predict?model=vaziosvm',
+            content_type='multipart/form-data', data=data)
+        test_dict = json.loads(rv.data.decode())
+        assert test_dict.get('success') is not None
+        assert test_dict.get('success') is True
+        assert test_dict.get('predictions') is not None
+        print(test_dict.get('predictions'))
+        assert test_dict.get('predictions')[0].get('vazio') is False

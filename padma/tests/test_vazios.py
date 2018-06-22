@@ -54,9 +54,9 @@ class TestModel(unittest.TestCase):
     def test_vazio2(self):
         preds = self.model2.predict(image=self.vazio)
         print(preds)
-        assert preds[0]['naovazio'] == 0
+        assert preds[0]['vazio'] == True
 
     def test_cheio2(self):
         preds = self.model2.predict(image=self.cheio)
         print(preds)
-        assert preds[0]['naovazio'] == 1
+        assert preds[0]['vazio'] == False
