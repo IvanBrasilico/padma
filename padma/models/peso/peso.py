@@ -1,9 +1,10 @@
+import os
+
 import numpy as np
+from scipy import misc
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import OneHotEncoder
-from scipy import misc
-import os
 
 N_BINS = 12
 BASE_PATH = os.path.dirname(__file__)

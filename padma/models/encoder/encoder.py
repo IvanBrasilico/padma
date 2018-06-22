@@ -1,8 +1,9 @@
-import numpy as np
 import os
-from keras.models import load_model, Model
-from PIL import Image
+
+import numpy as np
 import tensorflow as tf
+from keras.models import Model, load_model
+from PIL import Image
 
 BASE_PATH = os.path.dirname(__file__)
 MODEL_FILE = os.path.join(BASE_PATH, 'autoencoderGPUNormal100Epoch.h5')

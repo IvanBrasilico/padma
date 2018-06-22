@@ -1,7 +1,8 @@
+import os
+
 import numpy as np
 # from sklearn.ensemble import RandomForestRegressor
 from sklearn.externals import joblib
-import os
 
 N_BINS = 16
 BASE_PATH = os.path.dirname(__file__)

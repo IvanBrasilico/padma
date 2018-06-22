@@ -4,8 +4,8 @@ import unittest
 
 from PIL import Image
 
-from padma.models.vazios.vazios import VazioModel
 from padma.models.vazios.vazio2 import VazioSVMModel
+from padma.models.vazios.vazios import VazioModel
 
 VAZIO_IMAGE = os.path.join(os.path.dirname(__file__), 'vazio.jpg')
 CHEIO_IMAGE = os.path.join(os.path.dirname(__file__), 'cheio.jpg')
@@ -54,9 +54,9 @@ class TestModel(unittest.TestCase):
     def test_vazio2(self):
         preds = self.model2.predict(image=self.vazio)
         print(preds)
-        assert preds[0]['vazio'] == True
+        assert preds[0]['vazio'] is True
 
     def test_cheio2(self):
         preds = self.model2.predict(image=self.cheio)
         print(preds)
-        assert preds[0]['vazio'] == False
+        assert preds[0]['vazio'] is False

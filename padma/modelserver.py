@@ -1,15 +1,14 @@
 import json
 import pickle
 import time
-from threading import Thread
 from sys import platform
+from threading import Thread
 
-from ajna_commons.flask.conf import (redisdb)
+from ajna_commons.flask.conf import redisdb
 from ajna_commons.flask.log import logger
-
+from padma.models.conteiner20e40.bbox import SSDMobileModel
 from padma.models.models import (Encoder, Naive, Peso, Peso2, Pong, Vazios,
                                  VazioSVM)
-from padma.models.conteiner20e40.bbox import SSDMobileModel
 
 BATCH_SIZE = 10
 SERVER_SLEEP = 0.10

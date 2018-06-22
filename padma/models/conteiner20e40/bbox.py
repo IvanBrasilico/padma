@@ -1,16 +1,16 @@
-import numpy as np
 import os
 import sys
 import time
-import tensorflow as tf
 
+import numpy as np
+import tensorflow as tf
 from PIL import Image
 
 # É preciso clonar o repositório models do tensorflow no raiz do padma
 # para utilizá-lo https://github.com/IvanBrasilico/models.git
 sys.path.append('./models/research')
-from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
+from object_detection.utils import ops as utils_ops
 
 
 PATH_TO_CKPT = os.path.join(os.path.dirname(

@@ -5,7 +5,6 @@
 #   JSON dict with model response
 import io
 import json
-import numpy as np
 import os
 import pickle
 import tempfile
@@ -15,23 +14,23 @@ import uuid
 # from base64 import decodebytes
 from sys import platform
 
-from flask import (Flask, flash, jsonify, redirect, render_template,
-                   request, Response, send_file, url_for)
-# import redis
-from PIL import Image
-
+import numpy as np
+from flask import (Flask, Response, flash, jsonify, redirect, render_template,
+                   request, send_file, url_for)
 from flask_bootstrap import Bootstrap
 from flask_login import current_user, login_required
 from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 from flask_wtf.csrf import CSRFProtect
+# import redis
+from PIL import Image
+from pymongo import MongoClient
 
-from ajna_commons.flask.conf import (SECRET, DATABASE, MONGODB_URI,
-                                     redisdb)
 import ajna_commons.flask.login as login
+from ajna_commons.flask.conf import DATABASE, MONGODB_URI, SECRET, redisdb
+
 # from ajna_commons.flask.log import logger
 
-from pymongo import MongoClient
 
 PADMA_REDIS_KEY = 'PADMAKEY01'
 
