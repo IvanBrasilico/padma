@@ -1,8 +1,19 @@
-# JSON server
-# Args
-#  model, params
-# Returns
-#   JSON dict with model response
+"""Interface web que faz proxy para a chamada de modelos.
+
+Esta aplicação faz a autenticação dos clientes e um "proxy" para a chamada
+dos modelos de aprendizado de máquina. Os modelos são servidos efetivamente
+por outro processo "modelserver.py". A comunicação entre os dois processos
+se dá via REDIS.
+
+São responsabilidades desta aplicação:
+
+    - Autenticação
+    - Segurança
+    - Tratamento de erros
+    - Receber uma imagem, repassar para modelserver, aguardar resposta,
+    formatar resposta e enviar para cliente. Controlar e avisar de timeout.
+
+"""
 import io
 import json
 import os
@@ -10,8 +21,6 @@ import pickle
 import tempfile
 import time
 import uuid
-# from base64 import b64encode
-# from base64 import decodebytes
 from sys import platform
 
 import numpy as np
@@ -22,24 +31,16 @@ from flask_login import current_user, login_required
 from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 from flask_wtf.csrf import CSRFProtect
-# import redis
 from PIL import Image
 from pymongo import MongoClient
 
+
 import ajna_commons.flask.login as login
+from ajna_commons.utils.images import recorta_imagem
 from ajna_commons.flask.conf import DATABASE, MONGODB_URI, SECRET, redisdb
 
-# from ajna_commons.flask.log import logger
+from ajna_commons.flask.log import logger
 
-
-PADMA_REDIS_KEY = 'PADMAKEY01'
-
-# initialize constants used to control image spatial dimensions and
-# data type
-IMAGE_WIDTH = 224
-IMAGE_HEIGHT = 224
-IMAGE_CHANS = 3
-IMAGE_DTYPE = 'float32'
 
 # initialize constants used for server queuing
 CLIENT_SLEEP = 0.10  # segundos
@@ -119,23 +120,10 @@ def call_model(model: str, image: Image):
     return True, predictions
 
 
-def preprocess_image(image, prepare):
-    # read the image in PIL format and prepare it for classification
-    image = Image.open(io.BytesIO(image))
-    if prepare:
-        image = prepare(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
-        # ensure our NumPy array is C-contiguous as well,
-        # otherwise we won't be able to serialize it
-        image = image.copy(order='C')
-    return image
-
-
-@csrf.exempt
 @app.route('/predict', methods=['POST'])
+@csrf.exempt
+@login_required
 def predict():
-    # preprocess = {
-    #    'resnet': prepare_image
-    # }
     # initialize the data dictionary that will be returned from the view
     data = {'success': False}
     s0 = None
@@ -145,58 +133,41 @@ def predict():
         image = request.files.get('image')
         if image and model:
             s0 = time.time()
-            """
-            prepare = preprocess.get(model)
-            if prepare:
-                image = preprocess_image(
-                    request.files['image'].read(), prepare)
-            else:
-                image = request.files['image'].read()
-
-            # indicate that the request was a success
-            """
             image = Image.open(io.BytesIO(image.read()))
             data['success'], data['predictions'] = call_model(model, image)
 
     # return the data dictionary as a JSON response
     if s0:
         s1 = time.time()
-        print('Results read from queue and returned in ', s1 - s0)
+        print('Results read from queue and returned in %f' % (s1 - s0))
+    print(data)
     return jsonify(data)
 
 
 @app.route('/image/<filename>')
-# @login_required
+@login_required
 def image(filename):
-    """Serializa a imagem do banco para stream HTTP."""
-
+    """Serializa a imagem do arquivo para stream HTTP."""
     filename = os.path.join(tmpdir, filename)
     image = open(filename, 'rb').read()
     return Response(response=image, mimetype='image/jpeg')
 
 
 @app.route('/image_zoom/<filename>')
-# @login_required
+@login_required
 def image_zoom(filename):
-    """Serializa a imagem do banco para stream HTTP."""
+    """Recorta e serializa a imagem do arquivo para stream HTTP."""
     filename = os.path.join(tmpdir, filename)
     image = Image.open(filename)
     success, pred_bbox = call_model('ssd', image)
     if success:
         coords = pred_bbox[0]['bbox']
-        im = np.asarray(image)
-        im = im[coords[0]:coords[2], coords[1]:coords[3]]
-        image = Image.fromarray(im)
-        img_io = io.BytesIO()
-        image.save(img_io, 'JPEG', quality=70)
-        img_io.seek(0)
+        img_io = recorta_imagem(image, coords)
     return send_file(img_io, mimetype='image/jpeg')
 
 
 @app.route('/teste', methods=['GET', 'POST'])
-@csrf.exempt
-# TODO: Make login in all clients and tests, then uncomment next line
-# @login_required
+@login_required
 def teste():
     """Função simplificada para teste interativo de upload de imagem"""
     result = []
@@ -269,21 +240,7 @@ if app.config['DEBUG'] is True:
 app.secret_key = SECRET
 app.config['SECRET_KEY'] = SECRET
 
-# if this is the main thread of execution first load the model and
-# then start the server
 if __name__ == '__main__':
-    # load the function used to classify input images in a *separate*
-    # thread than the one used for main classification
-    """
-    print('* Starting model service...')
-    if platform != 'win32':
-        t = Thread(target=classify_process, args=())
-        t.daemon = True
-        t.start()
-    else:
-        classify_process()
-    """
-    # start the web server
     print('* Starting web service...')
     app.config['DEBUG'] = True
     app.run(debug=app.config['DEBUG'], port=5002)

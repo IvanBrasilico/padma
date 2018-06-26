@@ -166,8 +166,9 @@ def df_plot(df, max_images):
         print(i, np.corrcoef(df[df.columns[i]], df['peso']))
 
 
-def monta_lista_ids_e_imagens(inicio, fim, max_linhas=100):
-    db = MongoClient(host=MONGODB_URI)[DATABASE]
+def monta_lista_ids_e_imagens(inicio, fim, max_linhas=100, db=None):
+    if db is None:
+        db = MongoClient(host=MONGODB_URI)[DATABASE]
     cursor = get_lista(db, inicio, fim, max_linhas)
     lista = [linha for linha in cursor]
     images = get_images(db, lista)
