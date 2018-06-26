@@ -20,6 +20,7 @@ t = Thread(target=classify_process, args=())
 t.daemon = True
 t.start()
 
+
 class FlaskTestCase(unittest.TestCase):
 
     def setUp(self):

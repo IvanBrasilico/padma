@@ -94,7 +94,7 @@ def call_model(model: str, image: Image):
     """
     if platform == 'win32':
         return win32_call_model(model, image)
-    print('Enter Sandman - sending request to queue')
+    logger.info('Enter Sandman - sending request to queue')
     # generate an ID then add the ID + image to the queue
     k = str(uuid.uuid4())
     d = {'id': k,
@@ -114,7 +114,7 @@ def call_model(model: str, image: Image):
         time.sleep(CLIENT_SLEEP)
         s1 = time.time()
         if s1 - s0 > CLIENT_TIMEOUT:  # Timeout
-            print('Timeout!!!!')
+            logger.warning('Timeout!!!! Modelo %s ID %s' % (model, k))
             redisdb.delete(k)
             return False, {}
     return True, predictions
@@ -139,8 +139,7 @@ def predict():
     # return the data dictionary as a JSON response
     if s0:
         s1 = time.time()
-        print('Results read from queue and returned in %f' % (s1 - s0))
-    print(data)
+        logger.info('Results read from queue and returned in %f' % (s1 - s0))
     return jsonify(data)
 
 
@@ -172,10 +171,6 @@ def teste():
     """Função simplificada para teste interativo de upload de imagem"""
     result = []
     ts = ''
-    print(request.method)
-    print(request.form)
-    import pprint
-    pprint.pprint(request.files)
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -188,21 +183,16 @@ def teste():
             flash('No selected file')
             return redirect(request.url)"""
         if file:  # and allowed_file(file.filename):
-            print(file)
             # os.remove('padma/static/temp.jpg')
             ts = str(time.time())
             filename = os.path.join(tmpdir, ts + '.jpg')
-            print(filename)
             with open(filename, 'wb') as temp:
                 temp.write(file.read())
             # print('content', file.read())
             image = Image.open(filename)
             # success, pred_bbox = call_model('naive', image)
             success, pred_bbox = call_model('ssd', image)
-            print(pred_bbox)
             if success:
-                print(image.size)
-                print(pred_bbox)
                 result.append(json.dumps(image.size))
                 result.append(json.dumps(pred_bbox))
                 coords = pred_bbox[0]['bbox']
@@ -241,6 +231,6 @@ app.secret_key = SECRET
 app.config['SECRET_KEY'] = SECRET
 
 if __name__ == '__main__':
-    print('* Starting web service...')
+    logger.info('* Starting web service...')
     app.config['DEBUG'] = True
     app.run(debug=app.config['DEBUG'], port=5002)
