@@ -148,3 +148,4 @@ padma/gym/_ids.npy
 padma/gym/indexes.npy
 *.pkl
 
+padma/gym/ncmsunicos/*

@@ -10,8 +10,8 @@ São responsabilidades desta aplicação:
     - Autenticação
     - Segurança
     - Tratamento de erros
-    - Receber uma imagem, repassar para modelserver, aguardar resposta,
-    formatar resposta e enviar para cliente. Controlar e avisar de timeout.
+    - Receber uma imagem, repassar para modelserver, aguardar resposta,\
+formatar resposta e enviar para cliente. Controlar e avisar de timeout.
 
 """
 import io
@@ -53,7 +53,6 @@ app = Flask(__name__, static_url_path='/static')
 csrf = CSRFProtect(app)
 Bootstrap(app)
 nav = Nav()
-login.login_manager.init_app(app)
 login.configure(app)
 login.DBUser.dbsession = db
 
