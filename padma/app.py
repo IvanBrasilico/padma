@@ -69,7 +69,7 @@ def index():
     if current_user.is_authenticated:
         return render_template('index.html')
     else:
-        return redirect(url_for('login'))
+        return redirect(url_for('commons.login'))
 
 
 def win32_call_model(model, image):
