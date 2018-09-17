@@ -44,7 +44,7 @@ class PesoModel():
             [[recintoid]]
         ).toarray()
         params.extend(recinto[0])
-        params.extend([(image.size[1] / image.size[0])])
+        params.extend([(image.shape[1] / image.shape[0])])
         return self.model.predict([params])
 
     def train(self, histograms, labels):

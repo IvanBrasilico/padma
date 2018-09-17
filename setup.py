@@ -16,6 +16,7 @@ setup(
         'flask_nav',
         'flask_wtf',
         'gevent',
+        'gunicorn',
         'keras',
         'h5py',
         'imutils',
