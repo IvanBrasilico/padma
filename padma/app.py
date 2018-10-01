@@ -91,6 +91,8 @@ def call_model(model: str, image: Image):
             True, dict com predições em caso de sucesso
             False, dict vazio em caso de timeout
     """
+    # TODO: mudar forma de salvar no REDIS!!!
+    # Está deixando chaves sem processar do outro lado
     if platform == 'win32':
         return win32_call_model(model, image)
     logger.info('Enter Sandman - sending request to queue')
