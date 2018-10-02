@@ -5,6 +5,8 @@ import os
 import sys
 from datetime import datetime, timedelta
 
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from PIL import Image
 from pymongo import MongoClient

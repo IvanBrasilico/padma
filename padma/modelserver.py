@@ -86,10 +86,10 @@ def classify_process():
                         logger.debug('Solicitado modelo não existente: "%s"' %
                                      model_key)
                         output = {'success': False,
-                                   'erro': 'Modelo não existente.' + \
-                                           'Modelos disponíveis %s ' %
-                                           modeldict.keys()
-                                   }
+                                  'erro': 'Modelo não existente.' +
+                                          'Modelos disponíveis %s ' %
+                                          modeldict.keys()
+                                  }
                         dump = json.dumps(output)
                         redisdb.set(d['id'], dump)
                     else:

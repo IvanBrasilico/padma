@@ -29,7 +29,7 @@ setup(
         'redis',
         'scipy',
         'sklearn',
-        'tensorflow==1.4.0',
+        'tensorflow==1.5.0',
     ],
     dependency_links=[
         'git+https://github.com/broadinstitute/keras-resnet',

@@ -6,10 +6,9 @@ import unittest
 from io import BytesIO
 from threading import Thread
 
+from ajna_commons.flask.login import DBUser
 from padma.app import app
 from padma.modelserver import classify_process
-
-from ajna_commons.flask.login import DBUser
 
 TEST_IMAGE = os.path.join(os.path.dirname(__file__), 'test.png')
 CHEIO_IMAGE = os.path.join(os.path.dirname(__file__), 'cheio.jpg')
@@ -65,9 +64,13 @@ class FlaskTestCase(unittest.TestCase):
 
     def test_login_invalido(self):
         rv = self.login('none', 'error')
-        print(rv)
         assert rv is not None
-        assert b'401' in rv.data
+        print(rv.data)
+        print(rv.status_code)
+        rv = self.app.get('/teste', follow_redirects=True)
+        print(rv)
+        assert b'Efetue login' in rv.data
+        assert b'loginmodal' in rv.data
 
     def test_index(self):
         rv = self.login('ajna', 'ajna')

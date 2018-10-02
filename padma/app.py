@@ -34,13 +34,11 @@ from flask_wtf.csrf import CSRFProtect
 from PIL import Image
 from pymongo import MongoClient
 
-
 import ajna_commons.flask.login as login
-from ajna_commons.utils.images import recorta_imagem
-from ajna_commons.flask.conf import DATABASE, MONGODB_URI, PADMA_REDIS, \
-    SECRET, redisdb
-
+from ajna_commons.flask.conf import (DATABASE, MONGODB_URI, PADMA_REDIS,
+                                     SECRET, redisdb)
 from ajna_commons.flask.log import logger
+from ajna_commons.utils.images import recorta_imagem
 from padma.modelserver import classify_process
 
 # initialize constants used for server queuing
@@ -81,7 +79,7 @@ def win32_call_model(model, image):
     return True, output
 
 
-def call_model(model: str, image: Image):
+def call_model(model: str, image: Image)-> dict:
     """Grava requisição no redisdb e aguarda retorno até timeout.
 
         Args:
@@ -89,8 +87,10 @@ def call_model(model: str, image: Image):
             image: PIL Image
 
         Returns:
-            True, dict com predições em caso de sucesso
-            False, dict vazio em caso de timeout
+            dict {'success', 'predictions', 'erro'}
+            success: True ou False
+            predictions: lista de dicts de predições em caso de sucesso
+            erro: mensagem de erro se acontecer
     """
     if platform == 'win32':
         return win32_call_model(model, image)
@@ -162,7 +162,9 @@ def image_zoom(filename):
     """Recorta e serializa a imagem do arquivo para stream HTTP."""
     filename = os.path.join(tmpdir, filename)
     image = Image.open(filename)
-    success, pred_bbox = call_model('ssd', image)
+    prediction = call_model('ssd', image)
+    success = prediction.get('success')
+    pred_bbox = prediction['predictions']
     if success:
         coords = pred_bbox[0]['bbox']
         img_io = recorta_imagem(image, coords)
@@ -195,7 +197,9 @@ def teste():
             # print('content', file.read())
             image = Image.open(filename)
             # success, pred_bbox = call_model('naive', image)
-            success, pred_bbox = call_model('ssd', image)
+            prediction = call_model('ssd', image)
+            success = prediction.get('success')
+            pred_bbox = prediction['predictions']
             if success:
                 result.append(json.dumps(image.size))
                 result.append(json.dumps(pred_bbox))
@@ -203,14 +207,14 @@ def teste():
                 im = np.asarray(image)
                 im = im[coords[0]:coords[2], coords[1]:coords[3]]
                 image = Image.fromarray(im)
-                success, pred_vazio = call_model('vazio', image)
-                result.append(json.dumps(pred_vazio))
-                success, pred_vazio = call_model('vaziosvm', image)
-                result.append(json.dumps(pred_vazio))
-                success, pred_peso = call_model('peso', im)
-                result.append(json.dumps(pred_peso))
-                success, pred_peso = call_model('pesor', im)
-                result.append(json.dumps(pred_peso))
+                pred = call_model('vazio', image)
+                result.append(json.dumps(pred))
+                pred = call_model('vaziosvm', image)
+                result.append(json.dumps(pred))
+                pred = call_model('peso', im)
+                result.append(json.dumps(pred))
+                pred = call_model('pesor', im)
+                result.append(json.dumps(pred))
 
     return render_template('teste.html', result=result, filename=ts + '.jpg')
 
