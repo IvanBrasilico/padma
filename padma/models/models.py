@@ -3,8 +3,8 @@ from PIL import Image
 from sklearn.externals import joblib
 
 from padma.models.bbox.bbox import NaiveModel
-# from padma.models.conteiner20e40.bbox import SSDMobileModel
-# from padma.models.encoder.encoder import EncoderModel
+from padma.models.conteiner20e40.bbox import SSDMobileModel
+from padma.models.encoder.encoder import EncoderModel
 from padma.models.peso.peso import PesoModel
 from padma.models.peso.peso2 import PesoModel2
 from padma.models.vazios.vazio2 import VazioSVMModel
@@ -14,6 +14,7 @@ from padma.models.vazios.vazios import VazioModel
 class BaseModel():
     def __init__(self, joblib_file=None):
         if (joblib_file is not None) and os.path.exists(joblib_file):
+            print('*Loading joblib model %s' % joblib_file)
             self._model = joblib.load(joblib_file)
         else:
             self._model = None
