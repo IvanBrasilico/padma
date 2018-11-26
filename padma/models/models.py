@@ -1,17 +1,22 @@
+import os
 from PIL import Image
+from sklearn.externals import joblib
 
 from padma.models.bbox.bbox import NaiveModel
-from padma.models.conteiner20e40.bbox import SSDMobileModel
-from padma.models.encoder.encoder import EncoderModel
+# from padma.models.conteiner20e40.bbox import SSDMobileModel
+# from padma.models.encoder.encoder import EncoderModel
 from padma.models.peso.peso import PesoModel
 from padma.models.peso.peso2 import PesoModel2
 from padma.models.vazios.vazio2 import VazioSVMModel
 from padma.models.vazios.vazios import VazioModel
 
 
-class ModelBase():
-    def __init__(self):
-        self._model = None
+class BaseModel():
+    def __init__(self, joblib_file=None):
+        if (joblib_file is not None) and os.path.exists(joblib_file):
+            self._model = joblib.load(joblib_file)
+        else:
+            self._model = None
         self._preds = {}
 
     def predict(self, image: Image)-> dict:
@@ -24,41 +29,41 @@ class ModelBase():
         return preds
 
 
-class Pong(ModelBase):
+class Pong(BaseModel):
     def predict(self):
         return {'Pong': 'Pong'}
 
 
-class Vazios(ModelBase):
+class Vazios(BaseModel):
     def __init__(self):
         self._model = VazioModel()
 
 
-class Peso(ModelBase):
+class Peso(BaseModel):
     def __init__(self, linear=False):
         self._model = PesoModel(linear)
 
 
-class Peso2(ModelBase):
+class Peso2(BaseModel):
     def __init__(self):
         self._model = PesoModel2()
 
 
-class Naive(ModelBase):
+class Naive(BaseModel):
     def __init__(self):
         self._model = NaiveModel()
 
 
-class SSD(ModelBase):
+class SSD(BaseModel):
     def __init__(self):
         self._model = SSDMobileModel()
 
 
-class Encoder(ModelBase):
+class Encoder(BaseModel):
     def __init__(self):
         self._model = EncoderModel()
 
 
-class VazioSVM(ModelBase):
+class VazioSVM(BaseModel):
     def __init__(self):
         self._model = VazioSVMModel()

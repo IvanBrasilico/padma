@@ -1,18 +1,19 @@
 import json
 import pickle
 import time
+import os
 from sys import platform
 from threading import Thread
 
 from ajna_commons.flask.conf import redisdb
 from ajna_commons.flask.log import logger
-from padma.models.conteiner20e40.bbox import SSDMobileModel
-from padma.models.models import (Encoder, Naive, Peso, Peso2, Pong, Vazios,
+# from padma.models.conteiner20e40.bbox import SSDMobileModel
+from padma.models.models import (BaseModel, Encoder, Naive, Peso, Peso2, Pong, Vazios,
                                  VazioSVM)
 
 BATCH_SIZE = 10
 SERVER_SLEEP = 0.10
-
+MODEL_DIRECTORY = 'joblib_models'
 
 def model_predict(model, _id, image):
     s0 = time.time()
@@ -31,11 +32,7 @@ def model_predict(model, _id, image):
         dump = json.dumps(output)
         redisdb.set(_id, dump)
 
-
-def classify_process():
-    # Load the pre-trained models, only once.
-    # Then wait for incoming queries on redis
-    modeldict = dict()
+def load_models_hardcoded(modeldict):
     print('* Loading model PONG (ping-pong test if alive) *')
     modeldict['ping'] = Pong()
     print('* Loading model Vazios...')
@@ -54,15 +51,32 @@ def classify_process():
     modeldict['naive'] = Naive()
     print('* Model naive bbox loaded')
     print('* Loading model SSD BBox...')
-    modeldict['ssd'] = SSDMobileModel()
+#     modeldict['ssd'] = SSDMobileModel()
     print('* Model SSD bbox loaded')
     print('* Loading model Indexador(index)...')
-    modeldict['index'] = Encoder()
+#    modeldict['index'] = Encoder()
     print('* Model Index loaded')
     print('* Loading model Vazio SVM(vaziosvm)...')
-    modeldict['vaziosvm'] = VazioSVM()
+#    modeldict['vaziosvm'] = VazioSVM()
     print('* Model Vazio SVM loaded')
 
+
+
+def load_models_fromdisk(modeldict):
+    try:
+        models = os.listdir(MODEL_DIRECTORY)
+        for model in models:
+            modeldict[model] = BaseModel(os.path.join(MODEL_DIRECTORY, model))
+    except FileNotFoundError:
+        print('Caminho %s não encontrado!!!' % MODEL_DIRECTORY)
+
+
+def classify_process():
+    # Load the pre-trained models, only once.
+    # Then wait for incoming queries on redis
+    modeldict = dict()
+    load_models_hardcoded(modeldict)
+    load_models_fromdisk(modeldict)
     if platform != 'win32':
         # continually poll for new images to classify
         while True:
