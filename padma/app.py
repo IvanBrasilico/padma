@@ -34,13 +34,12 @@ from flask_wtf.csrf import CSRFProtect
 from PIL import Image
 from pymongo import MongoClient
 
-
 import ajna_commons.flask.login as login
-from ajna_commons.utils.images import recorta_imagem
-from ajna_commons.flask.conf import DATABASE, MONGODB_URI, SECRET, redisdb
-
+from ajna_commons.flask.conf import (DATABASE, MONGODB_URI, PADMA_REDIS,
+                                     SECRET, redisdb)
 from ajna_commons.flask.log import logger
-
+from ajna_commons.utils.images import recorta_imagem
+from padma.modelserver import classify_process
 
 # initialize constants used for server queuing
 CLIENT_SLEEP = 0.10  # segundos
@@ -74,13 +73,13 @@ def index():
 
 def win32_call_model(model, image):
     """Síncrono, sem threads, para uso no desktop Windows."""
-    from modelserver import model_dict
+    model_dict = classify_process()
     model = model_dict[model]
     output = model.predict(image)
     return True, output
 
 
-def call_model(model: str, image: Image):
+def call_model(model: str, image: Image)-> dict:
     """Grava requisição no redisdb e aguarda retorno até timeout.
 
         Args:
@@ -88,37 +87,41 @@ def call_model(model: str, image: Image):
             image: PIL Image
 
         Returns:
-            True, dict com predições em caso de sucesso
-            False, dict vazio em caso de timeout
+            dict {'success', 'predictions', 'erro'}
+            success: True ou False
+            predictions: lista de dicts de predições em caso de sucesso
+            erro: mensagem de erro se acontecer
     """
-    # TODO: mudar forma de salvar no REDIS!!!
-    # Está deixando chaves sem processar do outro lado
     if platform == 'win32':
         return win32_call_model(model, image)
     logger.info('Enter Sandman - sending request to queue')
     # generate an ID then add the ID + image to the queue
     k = str(uuid.uuid4())
-    d = {'id': k,
+    d = {'model': model,
+         'id': k,
          'image': image}
-    redisdb.rpush(model, pickle.dumps(d, protocol=1))
+    redisdb.rpush(PADMA_REDIS, pickle.dumps(d, protocol=1))
     s0 = time.time()
-    while True:
-        # attempt to grab the output predictions
-        output = redisdb.get(k)
-        # check to see if our model has classified the input image
-        if output is not None:
-            output = output.decode('utf-8')
-            predictions = json.loads(output)
-            # delete the result from the database and exit loop
-            redisdb.delete(k)
-            break
-        time.sleep(CLIENT_SLEEP)
-        s1 = time.time()
-        if s1 - s0 > CLIENT_TIMEOUT:  # Timeout
-            logger.warning('Timeout!!!! Modelo %s ID %s' % (model, k))
-            redisdb.delete(k)
-            return False, {}
-    return True, predictions
+    output = {'success': False, 'predictions': []}
+    try:
+        while True:
+            # attempt to grab the output predictions
+            output = redisdb.get(k)
+            # check to see if our model has classified the input image
+            if output is not None:
+                output = output.decode('utf-8')
+                output = json.loads(output)
+                # delete the result from the database and exit loop
+                redisdb.delete(k)
+                break
+            time.sleep(CLIENT_SLEEP)
+            s1 = time.time()
+            if s1 - s0 > CLIENT_TIMEOUT:  # Timeout
+                logger.warning('Timeout!!!! Modelo %s ID %s' % (model, k))
+                redisdb.delete(k)
+                return {'success': False, 'erro': 'Timeout!!!'}
+    finally:
+        return output
 
 
 @app.route('/predict', methods=['POST'])
@@ -126,7 +129,7 @@ def call_model(model: str, image: Image):
 @login_required
 def predict():
     # initialize the data dictionary that will be returned from the view
-    data = {'success': False}
+    data = [{'success': False}]
     s0 = None
     # ensure an image was properly uploaded to our endpoint
     if request.method == 'POST':
@@ -135,7 +138,7 @@ def predict():
         if image and model:
             s0 = time.time()
             image = Image.open(io.BytesIO(image.read()))
-            data['success'], data['predictions'] = call_model(model, image)
+            data = call_model(model, image)
 
     # return the data dictionary as a JSON response
     if s0:
@@ -159,7 +162,9 @@ def image_zoom(filename):
     """Recorta e serializa a imagem do arquivo para stream HTTP."""
     filename = os.path.join(tmpdir, filename)
     image = Image.open(filename)
-    success, pred_bbox = call_model('ssd', image)
+    prediction = call_model('ssd', image)
+    success = prediction.get('success')
+    pred_bbox = prediction['predictions']
     if success:
         coords = pred_bbox[0]['bbox']
         img_io = recorta_imagem(image, coords)
@@ -192,7 +197,9 @@ def teste():
             # print('content', file.read())
             image = Image.open(filename)
             # success, pred_bbox = call_model('naive', image)
-            success, pred_bbox = call_model('ssd', image)
+            prediction = call_model('ssd', image)
+            success = prediction.get('success')
+            pred_bbox = prediction['predictions']
             if success:
                 result.append(json.dumps(image.size))
                 result.append(json.dumps(pred_bbox))
@@ -200,14 +207,14 @@ def teste():
                 im = np.asarray(image)
                 im = im[coords[0]:coords[2], coords[1]:coords[3]]
                 image = Image.fromarray(im)
-                success, pred_vazio = call_model('vazio', image)
-                result.append(json.dumps(pred_vazio))
-                success, pred_vazio = call_model('vaziosvm', image)
-                result.append(json.dumps(pred_vazio))
-                success, pred_peso = call_model('peso', im)
-                result.append(json.dumps(pred_peso))
-                success, pred_peso = call_model('pesor', im)
-                result.append(json.dumps(pred_peso))
+                pred = call_model('vazio', image)
+                result.append(json.dumps(pred))
+                pred = call_model('vaziosvm', image)
+                result.append(json.dumps(pred))
+                pred = call_model('peso', im)
+                result.append(json.dumps(pred))
+                pred = call_model('pesor', im)
+                result.append(json.dumps(pred))
 
     return render_template('teste.html', result=result, filename=ts + '.jpg')
 

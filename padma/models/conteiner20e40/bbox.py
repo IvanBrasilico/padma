@@ -13,6 +13,7 @@ from object_detection.utils import label_map_util
 from object_detection.utils import ops as utils_ops
 
 
+
 PATH_TO_CKPT = os.path.join(os.path.dirname(
     __file__), 'frozen_inference_graph.pb')
 PATH_TO_LABELS = os.path.join(os.path.dirname(__file__), 'classes.pbtxt')
