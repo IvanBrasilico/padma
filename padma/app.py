@@ -47,13 +47,13 @@ CLIENT_TIMEOUT = 10  # segundos
 tmpdir = tempfile.mkdtemp()
 
 # Configure app and DB Connection
-db = MongoClient(host=MONGODB_URI)[DATABASE]
+# db = MongoClient(host=MONGODB_URI)[DATABASE]
 app = Flask(__name__, static_url_path='/static')
 csrf = CSRFProtect(app)
 Bootstrap(app)
 nav = Nav()
-login.configure(app)
-login.DBUser.dbsession = db
+# login.configure(app)
+# login.DBUser.dbsession = db
 
 
 def allowed_file(filename):
