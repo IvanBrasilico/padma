@@ -9,7 +9,7 @@ import json
 # initialize the Keras REST API endpoint URL along with the input
 # image path
 KERAS_REST_API_URL = "http://localhost:5002/predict?model=ssd"
-IMAGE_PATH = "jemma.png"
+IMAGE_PATH = "padma/tests/stamp1.jpg"
 
 # load the input image and construct the payload for the request
 image = open(IMAGE_PATH, "rb").read()
