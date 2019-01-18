@@ -4,6 +4,7 @@
 # import the necessary packages
 import requests
 import io
+import json
 
 # initialize the Keras REST API endpoint URL along with the input
 # image path
