@@ -26,15 +26,4 @@ except json.JSONDecodeError as err:
     print(err)
     result = {'predictions': None, 'success': False}
 
-# ensure the request was sucessful
 print(result)
-if result["success"]:
-    # loop over the predictions and display them
-    for (i, res) in enumerate(result["predictions"]):
-        print("{}. {}: {:.4f}".format(i + 1, res["label"],
-                                      res["probability"]))
-
-# otherwise, the request failed
-else:
-    print(result)
-    print("Request failed")
