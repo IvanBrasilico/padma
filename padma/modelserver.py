@@ -52,13 +52,13 @@ def load_models_hardcoded(modeldict):
     modeldict['naive'] = Naive()
     print('* Model naive bbox loaded')
     print('* Loading model SSD BBox...')
-    # modeldict['ssd'] = SSDMobileModel()
+    modeldict['ssd'] = SSDMobileModel()
     print('* Model SSD bbox loaded')
     print('* Loading model Indexador(index)...')
     # modeldict['index'] = Encoder()
     print('* Model Index loaded')
     print('* Loading model Vazio SVM(vaziosvm)...')
-    modeldict['vaziosvm'] = VazioSVM()
+    # modeldict['vaziosvm'] = VazioSVM()
     print('* Model Vazio SVM loaded')
 
 
