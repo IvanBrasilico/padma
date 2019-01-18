@@ -224,8 +224,8 @@ def mynavbar():
     items = [View('Home', 'index'),
              View('Testar modelos', 'teste'),
              ]
-    if current_user.is_authenticated:
-        items.append(View('Sair', 'commons.logout'))
+#    if current_user.is_authenticated:
+#        items.append(View('Sair', 'commons.logout'))
     return Navbar(*items)
 
 
