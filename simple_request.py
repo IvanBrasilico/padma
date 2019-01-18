@@ -27,6 +27,7 @@ except json.JSONDecodeError as err:
     result = {'predictions': None, 'success': False}
 
 # ensure the request was sucessful
+print(result)
 if result["success"]:
     # loop over the predictions and display them
     for (i, res) in enumerate(result["predictions"]):
