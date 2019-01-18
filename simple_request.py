@@ -22,7 +22,7 @@ r = requests.post(KERAS_REST_API_URL, files=payload, headers=headers)
 
 try:
     result = r.json()
-except JSONDecodeError as err:
+except json.JSONDecodeError as err:
     print(err)
     result = {'predictions': None, 'success': False}
 
