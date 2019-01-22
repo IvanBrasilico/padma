@@ -47,13 +47,13 @@ CLIENT_TIMEOUT = 10  # segundos
 tmpdir = tempfile.mkdtemp()
 
 # Configure app and DB Connection
-db = MongoClient(host=MONGODB_URI)[DATABASE]
+# db = MongoClient(host=MONGODB_URI)[DATABASE]
 app = Flask(__name__, static_url_path='/static')
 csrf = CSRFProtect(app)
 Bootstrap(app)
 nav = Nav()
-login.configure(app)
-login.DBUser.dbsession = db
+# login.configure(app)
+# login.DBUser.dbsession = db
 
 
 def allowed_file(filename):
@@ -62,13 +62,13 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[-1].lower() in ['jpg']
 
 
-@login_required
+#@login_required
 @app.route('/')
 def index():
-    if current_user.is_authenticated:
+#    if current_user.is_authenticated:
         return render_template('index.html')
-    else:
-        return redirect(url_for('commons.login'))
+#    else:
+#        return redirect(url_for('commons.login'))
 
 
 def win32_call_model(model, image):
@@ -126,7 +126,7 @@ def call_model(model: str, image: Image)-> dict:
 
 @app.route('/predict', methods=['POST'])
 @csrf.exempt
-@login_required
+# @login_required
 def predict():
     # initialize the data dictionary that will be returned from the view
     data = [{'success': False}]
@@ -148,7 +148,7 @@ def predict():
 
 
 @app.route('/image/<filename>')
-@login_required
+# @login_required
 def image(filename):
     """Serializa a imagem do arquivo para stream HTTP."""
     filename = os.path.join(tmpdir, filename)
@@ -157,7 +157,7 @@ def image(filename):
 
 
 @app.route('/image_zoom/<filename>')
-@login_required
+# @login_required
 def image_zoom(filename):
     """Recorta e serializa a imagem do arquivo para stream HTTP."""
     filename = os.path.join(tmpdir, filename)
@@ -172,7 +172,7 @@ def image_zoom(filename):
 
 
 @app.route('/teste', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def teste():
     """Função simplificada para teste interativo de upload de imagem"""
     result = []
@@ -224,8 +224,8 @@ def mynavbar():
     items = [View('Home', 'index'),
              View('Testar modelos', 'teste'),
              ]
-    if current_user.is_authenticated:
-        items.append(View('Sair', 'commons.logout'))
+#    if current_user.is_authenticated:
+#        items.append(View('Sair', 'commons.logout'))
     return Navbar(*items)
 
 
