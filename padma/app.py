@@ -39,7 +39,9 @@ from ajna_commons.flask.conf import (DATABASE, MONGODB_URI, PADMA_REDIS,
                                      SECRET, redisdb)
 from ajna_commons.flask.log import logger
 from ajna_commons.utils.images import recorta_imagem
-from padma.modelserver import classify_process
+
+if platform == 'win32':
+    from padma.modelserver import classify_process
 
 # initialize constants used for server queuing
 CLIENT_SLEEP = 0.10  # segundos
@@ -73,10 +75,12 @@ def index():
 
 def win32_call_model(model, image):
     """Síncrono, sem threads, para uso no desktop Windows."""
-    model_dict = classify_process()
-    model = model_dict[model]
-    output = model.predict(image)
-    return True, output
+    if platform == 'win32':
+        model_dict = classify_process()
+        model = model_dict[model]
+        output = model.predict(image)
+        return True, output
+    return False
 
 
 def call_model(model: str, image: Image)-> dict:
