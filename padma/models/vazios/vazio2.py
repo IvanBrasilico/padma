@@ -6,7 +6,7 @@ from sklearn.externals import joblib
 
 SIZE = 128, 128
 BASE_PATH = os.path.dirname(__file__)
-MODEL_FILE = os.path.join(BASE_PATH, 'SVCVazioDificeis.pkl')
+MODEL_FILE = os.path.join(BASE_PATH, 'vaziossvc.pkl')
 
 
 class VazioSVMModel():

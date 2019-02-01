@@ -128,21 +128,22 @@ def call_model(model: str, image: Image)-> dict:
         return output
 
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['POST', 'GET'])
 @csrf.exempt
 # @login_required
 def predict():
     # initialize the data dictionary that will be returned from the view
     data = [{'success': False}]
     s0 = None
+    pil_image = None
     # ensure an image was properly uploaded to our endpoint
-    if request.method == 'POST':
-        model = request.args.get('model')
-        image = request.files.get('image')
-        if image and model:
-            s0 = time.time()
-            image = Image.open(io.BytesIO(image.read()))
-            data = call_model(model, image)
+    model = request.args.get('model')
+    image = request.files.get('image')
+    if model:
+        s0 = time.time()
+        if image:
+            pil_image = Image.open(io.BytesIO(image.read()))
+        data = call_model(model, pil_image)
 
     # return the data dictionary as a JSON response
     if s0:

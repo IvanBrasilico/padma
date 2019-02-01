@@ -13,7 +13,7 @@ from padma.models.models import (BaseModel, Encoder, Naive, Peso, Peso2, Pong, V
 
 BATCH_SIZE = 10
 SERVER_SLEEP = 0.10
-MODEL_DIRECTORY = 'joblib_models'
+MODEL_DIRECTORY = os.path.join('padma', 'models', 'joblib_models')
 
 def model_predict(model, _id, image):
     s0 = time.time()
@@ -55,10 +55,10 @@ def load_models_hardcoded(modeldict):
     modeldict['ssd'] = SSDMobileModel()
     print('* Model SSD bbox loaded')
     print('* Loading model Indexador(index)...')
-    # modeldict['index'] = Encoder()
+    modeldict['index'] = Encoder()
     print('* Model Index loaded')
     print('* Loading model Vazio SVM(vaziosvm)...')
-    # modeldict['vaziosvm'] = VazioSVM()
+    modeldict['vaziosvm'] = VazioSVM()
     print('* Model Vazio SVM loaded')
 
 
