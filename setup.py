@@ -28,7 +28,7 @@ setup(
         'raven',
         'redis',
         'scipy',
-        'sklearn',
+        'scikit-learn==0.19.1',
         'tensorflow==1.5.0',
     ],
     dependency_links=[
@@ -49,9 +49,11 @@ setup(
             'flask-webtest',
             'isort',
             'ipykernel',
+            'pandas',
             'pytest',
             'pytest-cov',
             'pytest-mock',
+            'requests',
             'testfixtures',
             'tox'
         ],
