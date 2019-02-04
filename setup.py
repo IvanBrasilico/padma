@@ -48,6 +48,7 @@ setup(
             'flake8-quotes',
             'flask-webtest',
             'isort',
+            'ipykernel',
             'pytest',
             'pytest-cov',
             'pytest-mock',
