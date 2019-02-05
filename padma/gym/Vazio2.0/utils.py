@@ -23,3 +23,11 @@ def image_array(filenames):
         del image
         result.append(image_array)
     return result
+
+
+def img_to_array(image):
+    image = image.resize(SIZE, Image.ANTIALIAS)
+    image_array = np.asarray(image).astype('float32')
+    image_array = image_array[:, :, 0] / 255
+    return [np.reshape(image_array, (image_array.shape[0] * image_array.shape[1]))]
+    

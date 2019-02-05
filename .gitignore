@@ -89,13 +89,7 @@ celerybeat-schedule
 # virtualenv
 .venv
 *venv/
-<<<<<<< HEAD
-<<<<<<< HEAD
 venv*/
-=======
->>>>>>> ea0a430f044d49bdbe78bf8397f57ae5ebcc2774
-=======
->>>>>>> ea0a430f044d49bdbe78bf8397f57ae5ebcc2774
 ENV/
 
 
@@ -138,15 +132,11 @@ tree.html
 image_aq/covimgaq/db.sqlite3.old
 image_aq/covimgaq/db.sqlite3
 padma/gym/pesovolexport.csv
-padma/gym/histograms_peso.pkl
-padma/gym/labels_peso.pkl
 temp.jpg
 padma/gym/images/*
 padma/gym/Vazio2.0/vazios*
 padma/gym/Vazio2.0/naovazios*
 padma/gym/_ids.npy
-padma/gym/indexes.npy
-*.pkl
 
-padma/gym/ncmsunicos/*
-.idea/*
+
+padma/models/vazios/vaziossvc.pkl
