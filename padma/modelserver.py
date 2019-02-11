@@ -12,7 +12,7 @@ from padma.models.models import (BaseModel, Encoder, Naive, Peso, Peso2, Pong, V
                                  VazioSVM)
 
 BATCH_SIZE = 10
-SERVER_SLEEP = 0.10
+SERVER_SLEEP = 0.017
 MODEL_DIRECTORY = os.path.join('padma', 'models', 'joblib_models')
 
 def model_predict(model, _id, image):

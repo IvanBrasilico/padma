@@ -44,7 +44,7 @@ if platform == 'win32':
     from padma.modelserver import classify_process
 
 # initialize constants used for server queuing
-CLIENT_SLEEP = 0.10  # segundos
+CLIENT_SLEEP = 0.015  # segundos
 CLIENT_TIMEOUT = 10  # segundos
 tmpdir = tempfile.mkdtemp()
 
