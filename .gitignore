@@ -144,3 +144,5 @@ padma/models/vazios/vaziossvc.pkl
 padma-venv/
 vazio/
 *.npy
+
+.idea/
