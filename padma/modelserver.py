@@ -2,18 +2,17 @@ import json
 import pickle
 import time
 import os
-from sys import platform
 from threading import Thread
 
 from ajna_commons.flask.conf import PADMA_REDIS, redisdb
 from ajna_commons.flask.log import logger
 from padma.models.conteiner20e40.bbox import SSDMobileModel
-from padma.models.models import (BaseModel, Encoder, Naive, Peso, Peso2, Pong, Vazios,
-                                 VazioSVM)
+from padma.models.models import (BaseModel, Encoder, Naive, Peso, Peso2, Pong,
+                                 Vazios, VazioSVM)
 
-BATCH_SIZE = 10
-SERVER_SLEEP = 0.10
-MODEL_DIRECTORY = os.path.join('padma', 'models', 'joblib_models')
+
+from padma.conf import BATCH_SIZE, MODEL_DIRECTORY, SERVER_SLEEP
+
 
 def model_predict(model, _id, image):
     s0 = time.time()
@@ -63,11 +62,44 @@ def load_models_hardcoded(modeldict):
 
 
 
+def model_process(model: str):
+    local_model = BaseModel(os.path.join(MODEL_DIRECTORY, model))
+    # continually poll for new images to classify
+    while True:
+        time.sleep(SERVER_SLEEP)
+        queue = redisdb.lrange(PADMA_REDIS+model, 0, BATCH_SIZE - 1)
+        if queue:
+            model_key = 'nao definido'
+            try:
+                print('Processo 2 - processing image classify from queue')
+                for cont, q in enumerate(queue, 1):
+                    d = pickle.loads(q)
+                    t = Thread(target=model_predict, args=(
+                        [local_model, d['id'], d['image']]))
+                    t.daemon = True
+                    t.start()
+            except Exception as err:
+                logger.debug('Erro ao recuperar modelo %s' %
+                             model_key)
+                logger.debug(str(q))
+                logger.error(err, exc_info=True)
+                output = {'success': False, 'erro': str(err)}
+                dump = json.dumps(output)
+                redisdb.set(d['id'], dump)
+            finally:
+                redisdb.ltrim(PADMA_REDIS+model, cont, -1)
+
+
+from multiprocessing import Process
+
 def load_models_fromdisk(modeldict):
     try:
         models = os.listdir(MODEL_DIRECTORY)
         for model in models:
-            modeldict[model] = BaseModel(os.path.join(MODEL_DIRECTORY, model))
+            p = Process(target=model_process, args=(model,))
+            modeldict[model] = p
+            p.start()
+            # p.join()
     except FileNotFoundError:
         print('Caminho %s não encontrado!!!' % MODEL_DIRECTORY)
 
@@ -76,37 +108,40 @@ def classify_process():
     # Load the pre-trained models, only once.
     # Then wait for incoming queries on redis
     modeldict = dict()
-    load_models_hardcoded(modeldict)
+    print('Carregando modelos Dinâmicos/processo')
     load_models_fromdisk(modeldict)
-    if platform == 'win32':
-        return modeldict
+    print('Carregando modelos HARDCODED')
+    load_models_hardcoded(modeldict)
+    print('Fim dos carregamentos...')
     # continually poll for new images to classify
     while True:
         # attempt to grab a batch of images from the database
+        time.sleep(SERVER_SLEEP)
         queue = redisdb.lrange(PADMA_REDIS, 0, BATCH_SIZE - 1)
         # loop over the queue
         if queue:
+            cont = 0
+            model_key = 'nao definido'
             try:
-                cont = 0
-                model_key = ''
                 print('Processing image classify from queue')
                 for q in queue:
                     cont += 1
                     d = pickle.loads(q)
                     model_key = d.get('model')
                     model_item = modeldict.get(model_key)
-                    print(model_key, model_item)
                     if model_item is None:
                         logger.debug('Solicitado modelo não existente: "%s"' %
                                      model_key)
                         output = {'success': False,
-                                  'erro': 'Modelo não existente.' +
-                                          'Modelos disponíveis %s ' %
-                                          modeldict.keys()
+                                  'erro': 'Modelo não existente: %s.' % model_key,
+                                  'modelos':  list(modeldict.keys())
                                   }
                         dump = json.dumps(output)
                         redisdb.set(d['id'], dump)
                     else:
+                        print('Vai para thread...')
+                        logger.debug('Enviando para thread %s %s'
+                                     % (model_key, model_item))
                         t = Thread(target=model_predict, args=(
                             [model_item, d['id'], d['image']]))
                         t.daemon = True
@@ -121,8 +156,6 @@ def classify_process():
                 redisdb.set(d['id'], dump)
             finally:
                 redisdb.ltrim(PADMA_REDIS, cont, -1)
-        # sleep for a small amount
-        time.sleep(SERVER_SLEEP)
 
 
 if __name__ == '__main__':
