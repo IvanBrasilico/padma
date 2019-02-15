@@ -1,3 +1,9 @@
+"""Coleção de views da interface web do módulo Padma
+
+Módulo Padma é o Servidor de modelos de aprendizado de máquina.
+
+"""
+
 import io
 import json
 import numpy as np
@@ -6,7 +12,6 @@ import pickle
 import tempfile
 import time
 import uuid
-
 
 from flask import (Flask, Response, flash, jsonify, redirect, render_template,
                    request, send_file, url_for)
@@ -26,17 +31,16 @@ from ajna_commons.utils.images import recorta_imagem
 
 from padma.conf import CLIENT_SLEEP, CLIENT_TIMEOUT, MODEL_DIRECTORY
 
-
 # initialize constants used for server queuing
 
 tmpdir = tempfile.mkdtemp()
-
 
 app = Flask(__name__, static_url_path='/static')
 csrf = CSRFProtect(app)
 Bootstrap(app)
 nav = Nav()
 nav.init_app(app)
+
 
 def configure_app(mongodb):
     """Configurações gerais e de Banco de Dados da Aplicação."""
@@ -53,12 +57,10 @@ def configure_app(mongodb):
     return app
 
 
-
-
 def allowed_file(filename):
     """Check allowed extensions"""
     return '.' in filename and \
-        filename.rsplit('.', 1)[-1].lower() in ['jpg']
+           filename.rsplit('.', 1)[-1].lower() in ['jpg']
 
 
 @login_required
@@ -70,7 +72,7 @@ def index():
         return redirect(url_for('commons.login'))
 
 
-def call_model(model: str, image: Image)-> dict:
+def call_model(model: str, image: Image) -> dict:
     """Grava requisição no redisdb e aguarda retorno até timeout.
 
         Args:
@@ -92,7 +94,7 @@ def call_model(model: str, image: Image)-> dict:
     modelname = PADMA_REDIS
     if '.pkl' in model:
         modelname += model
-        print(modelname)
+        logger.debug('Processo 2 recebeu modelo %s' % modelname)
     redisdb.rpush(modelname, pickle.dumps(d, protocol=1))
     s0 = time.time()
     output = {'success': False, 'predictions': []}
@@ -183,12 +185,14 @@ def teste():
             return redirect(request.url)"""
         if file:  # and allowed_file(file.filename):
             # os.remove('padma/static/temp.jpg')
-            ts = str(time.time())
-            filename = os.path.join(tmpdir, ts + '.jpg')
-            with open(filename, 'wb') as temp:
-                temp.write(file.read())
+            # TODO: open Image direct from memory
+            # ts = str(time.time())
+            # filename = os.path.join(tmpdir, ts + '.jpg')
+            # with open(filename, 'wb') as temp:
+            #    temp.write(file.read())
             # print('content', file.read())
-            image = Image.open(filename)
+            # image = Image.open(filename)
+            image = Image.open(file.stream)
             # success, pred_bbox = call_model('naive', image)
             prediction = call_model('ssd', image)
             success = prediction.get('success')
@@ -211,6 +215,7 @@ def teste():
 
     return render_template('teste.html', result=result, filename=ts + '.jpg')
 
+
 @app.route('/modelos', methods=['GET', 'POST'])
 # @login_required
 def modelos():
@@ -231,6 +236,7 @@ def modelos():
 
     # return render_template('modelos.html', result=result)
     return jsonify(result)
+
 
 @nav.navigation()
 def mynavbar():
