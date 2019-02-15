@@ -60,7 +60,7 @@ def configure_app(mongodb):
 def allowed_file(filename):
     """Check allowed extensions"""
     return '.' in filename and \
-           filename.rsplit('.', 1)[-1].lower() in ['jpg']
+           filename.rsplit('.', 1)[-1].lower() in ['jpg', 'pkl']
 
 
 @login_required
@@ -229,13 +229,15 @@ def modelos():
         if file and allowed_file(file.filename):
             # os.remove('padma/static/temp.jpg')
             dest_filename = os.path.join(MODEL_DIRECTORY, file.filename)
-            with open(dest_filename, 'wb') as model:
-                model.write(file.read())
+            with open(dest_filename, 'wb') as modelpkl:
+                modelpkl.write(file.read())
                 # TODO: Open model
+            flash('Arquivo %s salvo.' % dest_filename)
+        else:
+            flash('Somente arquivo pickle!')
+            return redirect(request.url)
     result = call_model('Consulta', None)
-
-    # return render_template('modelos.html', result=result)
-    return jsonify(result)
+    return render_template('modelos.html', result=result)
 
 
 @nav.navigation()
