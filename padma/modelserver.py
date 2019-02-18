@@ -113,7 +113,7 @@ def classify_process():
         logger.warning('Caminho %s não encontrado!!!' % MODEL_DIRECTORY)
 
     logger.info('Carregando modelos HARDCODED')
-    load_models_hardcoded(modeldict, models)
+    load_models_hardcoded(modeldict)
     logger.info('Fim dos carregamentos...')
 
     # continually poll for new images to classify
