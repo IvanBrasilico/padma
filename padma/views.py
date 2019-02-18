@@ -119,24 +119,29 @@ def call_model(model: str, image: Image) -> dict:
         return output
 
 
+@app.route('/api/predict', methods=['POST', 'GET'])
 @app.route('/predict', methods=['POST', 'GET'])
 @csrf.exempt
 # @login_required
 def predict():
+    """Recebe modelo e imagem, retorna json com predição.
+
+    modelo é obrigatório, imagem é opcional porque
+    chamar apenas o modelo dinämico irá carregá-lo na memória (função usada
+    quando da publicação de modelo novo).
+
+    """
     # initialize the data dictionary that will be returned from the view
     data = [{'success': False}]
-    s0 = None
     pil_image = None
-    # ensure an image was properly uploaded to our endpoint
     model = request.args.get('model')
-    image = request.files.get('image')
     if model:
+        pil_image = None
+        image = request.files.get('image')
         s0 = time.time()
         if image:
-            pil_image = Image.open(io.BytesIO(image.read()))
+            pil_image = Image.open(image.stream)
         data = call_model(model, pil_image)
-    # return the data dictionary as a JSON response
-    if s0:
         s1 = time.time()
         logger.info('Results read from queue and returned in %f' % (s1 - s0))
     return jsonify(data)

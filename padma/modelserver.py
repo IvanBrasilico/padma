@@ -92,16 +92,13 @@ def model_process(model: str):
 from multiprocessing import Process
 
 
-def load_models_fromdisk(modeldict):
-    try:
-        models = os.listdir(MODEL_DIRECTORY)
-        for model in models:
-            p = Process(target=model_process, args=(model,))
-            modeldict[model] = p
-            p.start()
-            # p.join()
-    except FileNotFoundError:
-        logger.warning('Caminho %s não encontrado!!!' % MODEL_DIRECTORY)
+def load_models_new_process(modeldict, models):
+    """"""
+    for model in models:
+        p = Process(target=model_process, args=(model,))
+        modeldict[model] = p
+        p.start()
+        # p.join()
 
 
 def classify_process():
@@ -109,10 +106,16 @@ def classify_process():
     # Then wait for incoming queries on redis
     modeldict = dict()
     logger.info('Carregando modelos Dinâmicos/processo')
-    load_models_fromdisk(modeldict)
+    try:
+        models = os.listdir(MODEL_DIRECTORY)
+        load_models_new_process(modeldict, models)
+    except FileNotFoundError:
+        logger.warning('Caminho %s não encontrado!!!' % MODEL_DIRECTORY)
+
     logger.info('Carregando modelos HARDCODED')
-    load_models_hardcoded(modeldict)
+    load_models_hardcoded(modeldict, models)
     logger.info('Fim dos carregamentos...')
+
     # continually poll for new images to classify
     while True:
         # attempt to grab a batch of images from the database
@@ -130,14 +133,18 @@ def classify_process():
                     model_key = d.get('model')
                     model_item = modeldict.get(model_key)
                     if model_item is None:
-                        logger.debug('Solicitado modelo não existente: "%s"' %
-                                     model_key)
-                        output = {'success': False,
-                                  'erro': 'Modelo não existente: %s.' % model_key,
-                                  'modelos': list(modeldict.keys())
-                                  }
-                        dump = json.dumps(output)
-                        redisdb.set(d['id'], dump)
+                        # Se existir mas não está carregado, carrega do disco.
+                        if os.path.exists(os.path.join(MODEL_DIRECTORY, model_key)):
+                            load_models_new_process(modeldict, [model_key])
+                        else:
+                            logger.debug('Solicitado modelo não existente: "%s"' %
+                                         model_key)
+                            output = {'success': False,
+                                      'erro': 'Modelo não existente: %s.' % model_key,
+                                      'modelos': list(modeldict.keys())
+                                      }
+                            dump = json.dumps(output)
+                            redisdb.set(d['id'], dump)
                     else:
                         logger.debug('Enviando para thread %s %s'
                                      % (model_key, model_item))
