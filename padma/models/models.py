@@ -30,14 +30,14 @@ class BaseModel():
             raise ('Error! Model not assigned.')
         if self._joblib:
             y = self._model.predict(image)
-            print(y)
+            # print(y)
             # TODO: Houve um erro de design e os modelos estão acoplados...
             # Ao invés de retornar a predição diretamente, fazem uma transcrição/tradução
             # Corrigir isso, retornando a predição original padrão em todos os modelos
             self._preds = y.tolist() # [{'vazio': bool(y_ == 0.)} for y_ in y]
         else:
             self._preds = self._model.predict(image)
-        print(self._preds)
+        # print(self._preds)
         return self._preds
 
     def format(self, preds):

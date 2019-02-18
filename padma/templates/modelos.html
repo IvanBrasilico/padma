@@ -1,0 +1,61 @@
+{% extends "layout.html" %} {% block content %}{{super()}}
+<div id="main" class="container-fluid">
+    <div id="top" class="row">
+        <h4>
+            <big>
+                <b>Este formulário permite o UPLOAD de modelo .pkl e lista todos os modelos disponíveis</b>
+            </big>
+        </h4>
+        <div class="col-sm-12">
+            <form action="modelos" method="post" enctype="multipart/form-data" id="frmimage">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <h3>
+                    <i>Informe um arquivo de modelo .pkl</i>
+                </h3>
+                <div class="input-group col-sm-5">
+                    <label class="btn btn-default" for="file">
+                        <input id="file" name="file" type="file" style="display:none" /> Pipeline salvo em .pkl
+                    </label>
+                    <div class="input-group-btn">
+                        <input class="btn btn-primary" type="submit" value="Submeter" />
+                    </div>
+                </div>
+                <big>
+                    <span class='label label-success' id="upload-file-info"></span>
+                </big>
+            </form>
+
+        </div>
+        <div class="col-sm-12">
+            <div class="table-responsive">
+                <h4>Modelos ativos no Servidor</h4>
+                <div class="table">
+                    {% if result and result['modelos'] %}
+                    <table class="inlineTable table table-striped table-bordered table-hover table-condensed table-responsive">
+                        {% for item in result['modelos'] %}
+                        <tr>
+                            <td>{{item}}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="bottom" class="row">
+        AJNA - Receita Federal do Brasil 2017
+    </div>
+</div>
+<!-- /#main -->
+{% endblock %} {% block scripts %} {{super()}}
+<script>
+    $(document).ready(function () {
+        $('#file').on('change', function (evt){
+            console.log(evt);
+            $("#upload-file-info").html(evt.currentTarget.files[0].name);
+        });
+
+    })
+
+</script> {% endblock %}

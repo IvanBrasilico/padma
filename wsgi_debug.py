@@ -1,7 +1,18 @@
-from padma.app import app
+import os
+from werkzeug.serving import run_simple
+from werkzeug.wsgi import DispatcherMiddleware
 
+from ajna_commons.flask.conf import PADMA_URL
 
-# start the web server
+os.environ['DEBUG'] = '1'
+from padma.main import app
+
 if __name__ == '__main__':
-    print('* Starting web service...')
-    app.run(port=5002, debug=True)
+    port = 5002
+    if PADMA_URL:
+        port = int(PADMA_URL.split(':')[-1])
+    application = DispatcherMiddleware(app,
+                                    {
+                                        '/padma': app
+                                    })
+    run_simple('localhost', port, application, use_reloader=True)
