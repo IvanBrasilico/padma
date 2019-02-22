@@ -225,22 +225,20 @@ def teste():
 # @login_required
 def modelos():
     """Listar modelos disponíveis na tela, publicar novo modelo pipeline."""
-    result = []
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
             return redirect(request.url)
         file = request.files.get('file')
         if file and allowed_file(file.filename):
-            # os.remove('padma/static/temp.jpg')
             dest_filename = os.path.join(MODEL_DIRECTORY, file.filename)
             with open(dest_filename, 'wb') as modelpkl:
                 modelpkl.write(file.read())
-                # TODO: Open model
+                # TODO: Message to open model
             flash('Arquivo %s salvo.' % dest_filename)
         else:
             flash('Somente arquivo pickle!')
-            return redirect(request.url)
+        return redirect(request.url)
     result = call_model('Consulta', None)
     return render_template('modelos.html', result=result)
 
