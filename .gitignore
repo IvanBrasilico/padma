@@ -145,4 +145,4 @@ padma-venv/
 vazio/
 *.npy
 
-.idea/
+.idea/*
