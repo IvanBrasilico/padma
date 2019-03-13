@@ -28,6 +28,7 @@ setup(
         'raven',
         'redis',
         'scipy',
+        'scikit-image',
         'scikit-learn==0.19.1',
         'tensorflow==1.5.0',
     ],
