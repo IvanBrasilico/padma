@@ -137,7 +137,8 @@ padma/gym/images/*
 padma/gym/Vazio2.0/vazios*
 padma/gym/Vazio2.0/naovazios*
 padma/gym/_ids.npy
-
+padma/gym/ncmsunicos/*
+padma/gym/data/*
 
 padma/models/vazios/vaziossvc.pkl
 
