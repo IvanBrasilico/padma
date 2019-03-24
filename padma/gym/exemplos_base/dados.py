@@ -1,13 +1,8 @@
 from gridfs import GridFS
 from pymongo import MongoClient
-from ajna_commons.flask.conf import DATABASE, MONGODB_URI
 from ajna_commons.utils.images import get_imagens_recortadas
 
-
-db = MongoClient(host=MONGODB_URI)[DATABASE]
-fs = GridFS(db)
-
-def get_cursor(filtro, limit=None, projection=None):
+def get_cursor(db, filtro, projection=None, limit=None):
     if projection:
         cursor = db['fs.files'].find(filtro, projection)
     else:
@@ -16,11 +11,9 @@ def get_cursor(filtro, limit=None, projection=None):
         cursor = cursor[:limit]
     return cursor
 
-
-
-def generate_batch(filtro, batch_size=32, limit=None, projection=None):
+def generate_batch(db, filtro, projection=None, batch_size=32, limit=None):
         """a generator for batches, so model.fit_generator can be used. """
-        cursor = get_cursor(filtro, limit, projection)
+        cursor = get_cursor(filtro, projection, limit)
         while True:
             images = []
             rows = []
@@ -31,7 +24,7 @@ def generate_batch(filtro, batch_size=32, limit=None, projection=None):
                 except StopIteration:
                     break
                 imgs = get_imagens_recortadas(db, row['_id'])
-                images.append(imgs[0])
+                images.append(imgs)
                 rows.append(row)
                 i += 1
             yield images, rows
