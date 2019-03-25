@@ -14,6 +14,7 @@ MODEL_FILE = os.path.join(BASE_PATH, 'ForestPeso.pkl')
 class PesoModel2():
     def __init__(self, bins=N_BINS, retrain=False):
         self._bins = bins
+        self.input_shape = [N_BINS - 1]
         self.model = joblib.load(MODEL_FILE)
         if retrain:
             with open(HIST_FILE, 'rb') as pkl:
@@ -23,8 +24,11 @@ class PesoModel2():
             self.model.fit(histograms, labels)
 
     def hist(self, img):
-        histo = np.histogram(img, bins=self._bins)
+        histo = np.histogram(img, bins=self._bins, range=(0, 255))
         return histo[0][:N_BINS - 1]
+
+    def prepara(self, pil_image):
+        return self.hist(pil_image)
 
     def predict(self, image):
         peso = self.model.predict([self.hist(image)])

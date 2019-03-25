@@ -21,6 +21,7 @@ class EncoderModel():
             model = Model(inputs=autoencoder.input,
                           outputs=autoencoder.get_layer('encoder').output)
         self.model = model
+        self.input_shape = (*SIZE, 1)
 
     def image_prepare(self, image: Image):
         image = image.resize(SIZE, Image.ANTIALIAS)
@@ -28,6 +29,9 @@ class EncoderModel():
         image_array = image_array[:, :, 0] / 255
         image_array = np.expand_dims([image_array], axis=3)
         return image_array
+
+    def prepara(self, pil_image):
+        return self.image_prepare(pil_image)
 
     def predict(self, image: Image):
         graph = self.graph
