@@ -92,9 +92,6 @@ def call_model(model: str, image: Image) -> dict:
          'id': k,
          'image': image}
     modelname = PADMA_REDIS
-    if '.pkl' in model:
-        modelname += model
-        logger.debug('Processo 2 recebeu modelo %s' % modelname)
     redisdb.rpush(modelname, pickle.dumps(d, protocol=1))
     s0 = time.time()
     output = {'success': False, 'predictions': []}
@@ -223,6 +220,7 @@ def teste():
 
 @app.route('/modelos', methods=['GET', 'POST'])
 # @login_required
+@csrf.exempt
 def modelos():
     """Listar modelos disponíveis na tela, publicar novo modelo pipeline."""
     if request.method == 'POST':
@@ -236,6 +234,7 @@ def modelos():
                 modelpkl.write(file.read())
                 # TODO: Message to open model
             flash('Arquivo %s salvo.' % dest_filename)
+            call_model(str(file.filename), None)
         else:
             flash('Somente arquivo pickle!')
         return redirect(request.url)

@@ -17,6 +17,7 @@ setup(
         'flask_wtf',
         'gevent',
         'gunicorn',
+        'joblib',
         'keras',
         'h5py',
         'imutils',
