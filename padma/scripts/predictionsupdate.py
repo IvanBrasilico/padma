@@ -35,11 +35,12 @@ Args:
 """
 import datetime
 import json
-import numpy as np
 import time
 
 import click
+import numpy as np
 from ajna_commons.utils.images import generate_batch
+from bson.objectid import ObjectId
 
 from padma.db import mongodb as db
 from padma.models.encoder.encoder import SIZE, EncoderModel
@@ -97,7 +98,7 @@ MODEL = 'ssd'
 @click.option('--campo', help='Nome do campo a atualizar.'
                               + 'Se omitido, usa o nome do modelo.',
               default='')
-@click.option('--tamanho',
+@click.option('--limit',
               help='Tamanho do lote (padrão ' + str(TAMANHO) + ')',
               default=TAMANHO)
 @click.option('--batch_size',
@@ -120,17 +121,15 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
         return False
     encontrados = db['fs.files'].count_documents(filtro)
     print('Iniciando processamento de %s registros com o modelo %s, campo %s.'
-          % (encontrados, modelo, campo))
-    registros_processados = 0
-    registros_vazios = 0
-    s_inicio = time.time()
+          ' (disponiveis %s)'
+          % (limit, modelo, campo, encontrados))
     batch_gen = generate_batch(db, filtro=filtro, projection=PROJECTION,
                                batch_size=batch_size, limit=limit)
 
     X = np.zeros((batch_size, *SIZE, 1), dtype=np.float32)
-    rows = []
     y = []
     s = time.time()
+    total = 0
     for batch, rows in batch_gen:
         if len(batch) == 0:
             break
@@ -138,7 +137,6 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
             image_array = encoder.image_prepare(images[0])
             s0 = time.time()
             X[i, :, :, :] = image_array
-            rows.append(row)
         s1 = time.time()
         print('Montou X em %0.2f ' % (s1 - s0))
         indexes = encoder.model.predict(X)
@@ -150,15 +148,21 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
         ystack = np.vstack(y).astype(np.float32)
         for i in range(batch_size):
             new_list = ystack[i, :].tolist()
-            index_row = row[i]
-            _id = row['_id']
+            index_row = rows[i]
+            _id = index_row['_id']
             old_predictions = index_row['metadata']['predictions']
             new_predictions = old_predictions
             new_predictions[0]['index'] = new_list
-            db.fs.files.update_one({'_id': _id}, {'$set': {'metadata.predicitions': json.dumps(new_predictions)}})
+            update_state = db.fs.files.update_one(
+                {'_id': ObjectId(_id)},
+                {'$set': {'metadata.predictions': json.dumps(new_predictions)}}
+            )
+            total = total + update_state.modified_count
     s3 = time.time()
     elapsed = s3 - s
-    print('Tempo total: %s. Por imagem: %s' % (elapsed, elapsed / limit))
+    tempo_imagem = 0 if (total == 0) else (elapsed / total)
+    print('Tempo total: %s. Total imagens %s. Por imagem: %s'
+          % (elapsed, total, tempo_imagem))
 
 
 if __name__ == '__main__':
