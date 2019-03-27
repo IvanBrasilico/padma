@@ -44,6 +44,7 @@ from bson.objectid import ObjectId
 
 from padma.db import mongodb as db
 from padma.models.encoder.encoder import SIZE, EncoderModel
+from padma.models.peso.peso2 import N_BINS, PesoModel2
 
 BBOX_MODELS = ['ssd']
 PROJECTION = ['metadata.predictions']  # Economia de I/O
@@ -112,8 +113,10 @@ MODEL = 'ssd'
                    + ' no formato DD/MM/AAAA.')
 def predictions_update(modelo, campo, limit, batch_size, update_date):
     """Consulta modelo e grava predições de retorno no MongoDB."""
-    modelo = 'index'
-    encoder = EncoderModel()
+    if modelo == 'index':
+        model = EncoderModel()
+    elif modelo == 'peso':
+        model = PesoModel2()
     if not campo:
         campo = modelo
     filtro = monta_filtro(campo, limit, update_date)
@@ -126,7 +129,7 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
     batch_gen = generate_batch(db, filtro=filtro, projection=PROJECTION,
                                batch_size=batch_size, limit=limit)
 
-    X = np.zeros((batch_size, *SIZE, 1), dtype=np.float32)
+    X = np.zeros((batch_size, *model.input_shape), dtype=np.float32)
     y = []
     s = time.time()
     total = 0
@@ -134,29 +137,45 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
         if len(batch) == 0:
             break
         for i, (images, row) in enumerate(zip(batch, rows)):
-            image_array = encoder.image_prepare(images[0])
+            image_array = model.prepara(images[0])
             s0 = time.time()
-            X[i, :, :, :] = image_array
+            if model == 'peso':
+                X[i, :, :, :] = image_array
+            else:
+                X[i, :] = image_array
         s1 = time.time()
         print('Montou X em %0.2f ' % (s1 - s0))
-        indexes = encoder.model.predict(X)
-        indexes = indexes.reshape(-1, 128).astype(np.float32)
-        y.append(indexes)
+        preds = model.model.predict(X)
+        if model == 'index':
+            preds = preds.reshape(-1, 128).astype(np.float32)
+        y.append(preds)
         s2 = time.time()
         print('Fez predição em %s' % (s2 - s1))
         # print(indexes)
-        ystack = np.vstack(y).astype(np.float32)
+        if model == 'peso':
+            ystack = np.vstack(y).astype(np.float32)
+        else:
+            ystack = np.vstack(y).astype(np.float32).flatten()
+        # print(y)
         for i in range(batch_size):
-            new_list = ystack[i, :].tolist()
+            if model == 'peso':
+                new_list = ystack[i, :].tolist()
+            else:
+                new_list = ystack[i].tolist()
             index_row = rows[i]
+            # print(index_row)
             _id = index_row['_id']
             old_predictions = index_row['metadata']['predictions']
+            # print(old_predictions)
             new_predictions = old_predictions
-            new_predictions[0]['index'] = new_list
+            new_predictions[0][modelo] = new_list
+            # print(new_predictions)
             update_state = db.fs.files.update_one(
                 {'_id': ObjectId(_id)},
-                {'$set': {'metadata.predictions': json.dumps(new_predictions)}}
+                {'$set': {'metadata.predictions': new_predictions}}
             )
+            # novo = db.fs.files.find_one({'_id': ObjectId(_id)})
+            # print(novo)
             total = total + update_state.modified_count
     s3 = time.time()
     elapsed = s3 - s
