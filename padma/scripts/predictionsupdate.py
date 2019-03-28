@@ -46,6 +46,7 @@ from padma.db import mongodb as db
 from padma.models.encoder.encoder import SIZE, EncoderModel
 from padma.models.peso.peso2 import N_BINS, PesoModel2
 from padma.models.conteiner20e40.bbox import SSDMobileModel
+from padma.models.vazios.vazio2 import VazioSVMModel
 
 BBOX_MODELS = ['ssd']
 PROJECTION = ['metadata.predictions']  # Economia de I/O
@@ -114,12 +115,18 @@ MODEL = 'ssd'
                    + ' no formato DD/MM/AAAA.')
 def predictions_update(modelo, campo, limit, batch_size, update_date):
     """Consulta modelo e grava predições de retorno no MongoDB."""
+    model = None
     if modelo == 'index':
         model = EncoderModel()
     elif modelo == 'peso':
         model = PesoModel2()
     elif modelo == 'ssd':
         model = SSDMobileModel()
+    elif modelo == 'vazio':
+        model = VazioSVMModel()
+    if model is None:
+        print('Modelo %s não implementado.' % modelo)
+        return False
     if not campo:
         if modelo == 'ssd':
             campo = 'bbox'
@@ -148,7 +155,10 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
             original_images.append(images[0])
             image_array = model.prepara(images[0])
             s0 = time.time()
-            X[i, :, :, :] = image_array
+            if modelo in ['peso', 'vazio']:
+                X[i, :] = image_array
+            else:
+                X[i, :, :, :] = image_array
         s1 = time.time()
         print('Montou X em %0.2f ' % (s1 - s0))
         if modelo == 'ssd':
@@ -159,28 +169,42 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
                 preds = preds.reshape(-1, 128).astype(np.float32)
         y.append(preds)
         s2 = time.time()
-        print('Fez predição em %s' % (s2 - s1))
+        print('Fez predição em %s. (batch size: %s)' % ((s2 - s1), batch_size))
         # print(indexes)
-        if model == 'peso':
-            ystack = np.vstack(y).astype(np.float32)
-        elif model == 'index':
+        if modelo in ['peso', 'vazio']:
             ystack = np.vstack(y).astype(np.float32).flatten()
+        elif modelo == 'index':
+            ystack = np.vstack(y).astype(np.float32)
         # print(y)
         if modelo == 'ssd':
             # Processa dicionário
+            for i, bboxes in preds.items():
+                index_row = rows[i]
+                _id = index_row['_id']
+                # print(bboxes)
+                update_state = db.fs.files.update_one(
+                    {'_id': ObjectId(_id)},
+                    {'$set': {'metadata.predictions': bboxes}}
+                )
+                total = total + update_state.modified_count
+                # novo = db.fs.files.find_one({'_id': ObjectId(_id)})
+                # print(novo)
         else:
             for i in range(batch_size):
-                if model == 'peso':
+                if modelo == 'peso':
+                    new_list = float(ystack[i])
+                elif modelo == 'vazio':
+                    new_list = float(ystack[i]) < 0.5
+                elif modelo == 'index':
                     new_list = ystack[i, :].tolist()
-                else:
-                    new_list = ystack[i].tolist()
+                # print(new_list)
                 index_row = rows[i]
                 # print(index_row)
                 _id = index_row['_id']
                 old_predictions = index_row['metadata']['predictions']
                 # print(old_predictions)
                 new_predictions = old_predictions
-                new_predictions[0][modelo] = new_list
+                new_predictions[0][campo] = new_list
                 # print(new_predictions)
                 update_state = db.fs.files.update_one(
                     {'_id': ObjectId(_id)},
@@ -189,8 +213,10 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
                 # novo = db.fs.files.find_one({'_id': ObjectId(_id)})
                 # print(novo)
                 total = total + update_state.modified_count
-    s3 = time.time()
-    elapsed = s3 - s
+        s3 = time.time()
+        print('Atualizou banco em %s' % (s3 - s2))
+    s4 = time.time()
+    elapsed = s4 - s
     tempo_imagem = 0 if (total == 0) else (elapsed / total)
     print('Tempo total: %s. Total imagens %s. Por imagem: %s'
           % (elapsed, total, tempo_imagem))

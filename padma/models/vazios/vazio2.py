@@ -13,16 +13,20 @@ class VazioSVMModel():
     def __init__(self, size=SIZE):
         self.size = size
         self.model = joblib.load(MODEL_FILE)
+        self.input_shape = [SIZE[0] * SIZE[1]]
 
     def image_prepare(self, image: Image):
         image = image.resize(self.size, Image.ANTIALIAS)
         image_array = np.asarray(image).astype('float32')
         # del image
         image_array = image_array[:, :, 0] / 255
-        print(image_array.shape)
+        # print(image_array.shape)
         image_array = np.reshape(image_array,
                                  image_array.shape[0] * image_array.shape[1])
         return image_array
+
+    def prepara(self, image):
+        return self.image_prepare(image)
 
     def predict(self, image: Image):
         # O modelo SVM foi treinado em classificação binária
