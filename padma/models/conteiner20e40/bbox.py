@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from collections import defaultdict
 
 import numpy as np
 import tensorflow as tf
@@ -12,7 +13,7 @@ sys.path.append('./models/research')
 from object_detection.utils import label_map_util
 from object_detection.utils import ops as utils_ops
 
-
+SIZE = (600, 240)
 
 PATH_TO_CKPT = os.path.join(os.path.dirname(
     __file__), 'frozen_inference_graph.pb')
@@ -78,9 +79,9 @@ def run_inference_for_single_image(image, graph):
                 real_num_detection = tf.cast(
                     tensor_dict['num_detections'][0], tf.int32)
                 detection_boxes = tf.slice(detection_boxes, [0, 0], [
-                                           real_num_detection, -1])
+                    real_num_detection, -1])
                 detection_masks = tf.slice(detection_masks, [0, 0, 0], [
-                                           real_num_detection, -1, -1])
+                    real_num_detection, -1, -1])
                 detection_masks_reframed = \
                     utils_ops.reframe_box_masks_to_image_masks(
                         detection_masks, detection_boxes,
@@ -114,7 +115,6 @@ def run_inference_for_single_image(image, graph):
     return output_dict
 
 
-
 def run_inference_for_batch(image, graph):
     with graph.as_default():
         # A linha abaixo faz a predição usar a CPU ao invés da GPU
@@ -144,9 +144,9 @@ def run_inference_for_batch(image, graph):
                 real_num_detection = tf.cast(
                     tensor_dict['num_detections'][0], tf.int32)
                 detection_boxes = tf.slice(detection_boxes, [0, 0], [
-                                           real_num_detection, -1])
+                    real_num_detection, -1])
                 detection_masks = tf.slice(detection_masks, [0, 0, 0], [
-                                           real_num_detection, -1, -1])
+                    real_num_detection, -1, -1])
                 detection_masks_reframed = \
                     utils_ops.reframe_box_masks_to_image_masks(
                         detection_masks, detection_boxes,
@@ -180,6 +180,8 @@ class SSDMobileModel():
         self._model = create_graph()
         self._labels_to_names = create_category_index()
         self._threshold = threshold
+        (im_width, im_height) = SIZE
+        self.input_shape = (im_height, im_width, 3)
 
     def predict(self, image):
         image_np = load_image_into_numpy_array(image)
@@ -201,9 +203,27 @@ class SSDMobileModel():
                 })
         return result
 
-    def predict_batch(self, batch):
+    def prepara(self, image):
+        image = image.resize(SIZE, Image.ANTIALIAS)
+        return np.array(image.getdata()).reshape(*self.input_shape).astype(np.uint8)
+
+    def predict_batch(self, batch, original_images):
         output_dict = run_inference_for_batch(batch, self._model)
-        return output_dict
+        result = defaultdict(list)
+        for ind, (scores, image) in enumerate(zip(output_dict['detection_scores'], original_images)):
+            for ind2, score in enumerate(scores):
+                if score > .8:
+                    xfinal, yfinal = image.size
+                    bbox = [0., 0., 0., 0.]
+                    bbox[0] = int(output_dict['detection_boxes'][ind][ind2][0] * yfinal)
+                    bbox[2] = int(output_dict['detection_boxes'][ind][ind2][2] * yfinal)
+                    bbox[1] = int(output_dict['detection_boxes'][ind][ind2][1] * xfinal)
+                    bbox[3] = int(output_dict['detection_boxes'][ind][ind2][3] * xfinal)
+                    result[ind].append({
+                        'bbox': bbox,
+                        'class': output_dict['detection_classes'][ind][ind2]
+                    })
+        return result
 
 
 if __name__ == '__main__':
