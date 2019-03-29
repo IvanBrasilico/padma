@@ -180,11 +180,11 @@ def classify_process():
                         if not isinstance(model_item, Process):
                             logger.debug('Enviando para thread %s %s'
                                          % (model_key, model_item))
-                            # t = Thread(target=model_predict, args=(
-                            #    [model_item, d['id'], d['image']]))
-                            # t.daemon = True
-                            # t.start()
-                            model_predict(model_item, d['id'], d['image'])
+                            t = Thread(target=model_predict, args=(
+                                [model_item, d['id'], d['image']]))
+                            t.daemon = True
+                            t.start()
+                            # model_predict(model_item, d['id'], d['image'])
             except Exception as err:
                 logger.error('Erro ao recuperar modelo %s' %
                              model_key)
