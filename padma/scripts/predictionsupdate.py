@@ -45,6 +45,8 @@ from bson.objectid import ObjectId
 from padma.db import mongodb as db
 from padma.models.encoder.encoder import SIZE, EncoderModel
 from padma.models.peso.peso2 import N_BINS, PesoModel2
+from padma.models.conteiner20e40.bbox import SSDMobileModel
+from padma.models.vazios.vazio2 import VazioSVMModel
 
 BBOX_MODELS = ['ssd']
 PROJECTION = ['metadata.predictions']  # Economia de I/O
@@ -113,12 +115,23 @@ MODEL = 'ssd'
                    + ' no formato DD/MM/AAAA.')
 def predictions_update(modelo, campo, limit, batch_size, update_date):
     """Consulta modelo e grava predições de retorno no MongoDB."""
+    model = None
     if modelo == 'index':
         model = EncoderModel()
     elif modelo == 'peso':
         model = PesoModel2()
+    elif modelo == 'ssd':
+        model = SSDMobileModel()
+    elif modelo == 'vazio':
+        model = VazioSVMModel()
+    if model is None:
+        print('Modelo %s não implementado.' % modelo)
+        return False
     if not campo:
-        campo = modelo
+        if modelo == 'ssd':
+            campo = 'bbox'
+        else:
+            campo = modelo
     filtro = monta_filtro(campo, limit, update_date)
     if not filtro:
         return False
@@ -127,58 +140,83 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
           ' (disponiveis %s)'
           % (limit, modelo, campo, encontrados))
     batch_gen = generate_batch(db, filtro=filtro, projection=PROJECTION,
-                               batch_size=batch_size, limit=limit)
+                               batch_size=batch_size, limit=limit,
+                               recorta=modelo not in BBOX_MODELS)
 
     X = np.zeros((batch_size, *model.input_shape), dtype=np.float32)
     y = []
+    original_images = []
     s = time.time()
     total = 0
     for batch, rows in batch_gen:
         if len(batch) == 0:
             break
         for i, (images, row) in enumerate(zip(batch, rows)):
+            original_images.append(images[0])
             image_array = model.prepara(images[0])
             s0 = time.time()
-            if model == 'peso':
-                X[i, :, :, :] = image_array
-            else:
+            if modelo in ['peso', 'vazio']:
                 X[i, :] = image_array
+            else:
+                X[i, :, :, :] = image_array
         s1 = time.time()
         print('Montou X em %0.2f ' % (s1 - s0))
-        preds = model.model.predict(X)
-        if model == 'index':
-            preds = preds.reshape(-1, 128).astype(np.float32)
+        if modelo == 'ssd':
+            preds = model.predict_batch(X, original_images)
+        else:
+            preds = model.model.predict(X)
+            if modelo == 'index':
+                preds = preds.reshape(-1, 128).astype(np.float32)
         y.append(preds)
         s2 = time.time()
-        print('Fez predição em %s' % (s2 - s1))
+        print('Fez predição em %s. (batch size: %s)' % ((s2 - s1), batch_size))
         # print(indexes)
-        if model == 'peso':
-            ystack = np.vstack(y).astype(np.float32)
-        else:
+        if modelo in ['peso', 'vazio']:
             ystack = np.vstack(y).astype(np.float32).flatten()
+        elif modelo == 'index':
+            ystack = np.vstack(y).astype(np.float32)
         # print(y)
-        for i in range(batch_size):
-            if model == 'peso':
-                new_list = ystack[i, :].tolist()
-            else:
-                new_list = ystack[i].tolist()
-            index_row = rows[i]
-            # print(index_row)
-            _id = index_row['_id']
-            old_predictions = index_row['metadata']['predictions']
-            # print(old_predictions)
-            new_predictions = old_predictions
-            new_predictions[0][modelo] = new_list
-            # print(new_predictions)
-            update_state = db.fs.files.update_one(
-                {'_id': ObjectId(_id)},
-                {'$set': {'metadata.predictions': new_predictions}}
-            )
-            # novo = db.fs.files.find_one({'_id': ObjectId(_id)})
-            # print(novo)
-            total = total + update_state.modified_count
-    s3 = time.time()
-    elapsed = s3 - s
+        if modelo == 'ssd':
+            # Processa dicionário
+            for i, bboxes in preds.items():
+                index_row = rows[i]
+                _id = index_row['_id']
+                # print(bboxes)
+                update_state = db.fs.files.update_one(
+                    {'_id': ObjectId(_id)},
+                    {'$set': {'metadata.predictions': bboxes}}
+                )
+                total = total + update_state.modified_count
+                # novo = db.fs.files.find_one({'_id': ObjectId(_id)})
+                # print(novo)
+        else:
+            for i in range(batch_size):
+                if modelo == 'peso':
+                    new_list = float(ystack[i])
+                elif modelo == 'vazio':
+                    new_list = float(ystack[i]) < 0.5
+                elif modelo == 'index':
+                    new_list = ystack[i, :].tolist()
+                # print(new_list)
+                index_row = rows[i]
+                # print(index_row)
+                _id = index_row['_id']
+                old_predictions = index_row['metadata']['predictions']
+                # print(old_predictions)
+                new_predictions = old_predictions
+                new_predictions[0][campo] = new_list
+                # print(new_predictions)
+                update_state = db.fs.files.update_one(
+                    {'_id': ObjectId(_id)},
+                    {'$set': {'metadata.predictions': new_predictions}}
+                )
+                # novo = db.fs.files.find_one({'_id': ObjectId(_id)})
+                # print(novo)
+                total = total + update_state.modified_count
+        s3 = time.time()
+        print('Atualizou banco em %s' % (s3 - s2))
+    s4 = time.time()
+    elapsed = s4 - s
     tempo_imagem = 0 if (total == 0) else (elapsed / total)
     print('Tempo total: %s. Total imagens %s. Por imagem: %s'
           % (elapsed, total, tempo_imagem))
