@@ -199,6 +199,7 @@ class SSDMobileModel():
                 bbox[2] = int(output_dict['detection_boxes'][ind][2] * yfinal)
                 bbox[1] = int(output_dict['detection_boxes'][ind][1] * xfinal)
                 bbox[3] = int(output_dict['detection_boxes'][ind][3] * xfinal)
+                print('##############', yfinal, xfinal, bbox)
                 result.append({
                     'bbox': bbox,
                     'class': output_dict['detection_classes'][ind]
