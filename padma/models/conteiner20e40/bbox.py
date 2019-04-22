@@ -193,7 +193,7 @@ class SSDMobileModel():
         result = []
         for ind, score in enumerate(output_dict['detection_scores']):
             if score > self._threshold:
-                yfinal, xfinal, _ = image_np.shape
+                yfinal, xfinal = image.size
                 bbox = [0., 0., 0., 0.]
                 bbox[0] = int(output_dict['detection_boxes'][ind][0] * yfinal)
                 bbox[2] = int(output_dict['detection_boxes'][ind][2] * yfinal)
