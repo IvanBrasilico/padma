@@ -43,7 +43,7 @@ from bson.objectid import ObjectId
 
 
 sys.path.insert(0, '/home/ivan/ajna/padma/padma')
-sys.path.insert(0, '.')
+sys.path.insert(0, '/home/ivan/ajna/padma/')
 from ajna_commons.utils.images import generate_batch
 from padma.db import mongodb as db
 from padma.models.encoder.encoder import SIZE, EncoderModel
