@@ -35,19 +35,16 @@ Args:
 """
 import datetime
 import time
-import sys
 
 import click
 import numpy as np
+from ajna_commons.utils.images import generate_batch
 from bson.objectid import ObjectId
 
-
-sys.path.insert(0, '/home/ivan/ajna/padma')
-from ajna_commons.utils.images import generate_batch
 from padma.db import mongodb as db
-from padma.models.encoder.encoder import SIZE, EncoderModel
-from padma.models.peso.peso2 import N_BINS, PesoModel2
 from padma.models.conteiner20e40.bbox import SSDMobileModel
+from padma.models.encoder.encoder import EncoderModel
+from padma.models.peso.peso2 import PesoModel2
 from padma.models.vazios.vazio2 import VazioSVMModel
 
 BBOX_MODELS = ['ssd']
@@ -201,7 +198,7 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
                     new_list = ystack[i, :].tolist()
                 # print(new_list)
                 index_row = rows[i]
-                # print(index_row)
+                print(index_row)
                 _id = index_row['_id']
                 old_predictions = index_row['metadata']['predictions']
                 # print(old_predictions)
