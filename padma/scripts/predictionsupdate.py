@@ -199,6 +199,7 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
                 # print(new_list)
                 index_row = rows[i]
                 print(index_row)
+
                 _id = index_row['_id']
                 old_predictions = index_row['metadata']['predictions']
                 # print(old_predictions)
