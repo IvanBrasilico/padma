@@ -147,6 +147,7 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
     original_images = []
     s = time.time()
     total = 0
+    turns = 0
     for batch, rows in batch_gen:
         if len(batch) == 0:
             break
@@ -216,6 +217,9 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
                 total = total + update_state.modified_count
         s3 = time.time()
         print('Atualizou banco em %s' % (s3 - s2))
+        turns += 1
+        print('Total imagens %s. Batchs processados: %s'
+              % (total, turns))
     s4 = time.time()
     elapsed = s4 - s
     tempo_imagem = 0 if (total == 0) else (elapsed / total)
