@@ -180,6 +180,7 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
             for i, bboxes in preds.items():
                 index_row = rows[i]
                 _id = index_row['_id']
+                print(index_row)
                 # print(bboxes)
                 update_state = db.fs.files.update_one(
                     {'_id': ObjectId(_id)},
