@@ -63,6 +63,7 @@ def monta_filtro(model: str, limit: int,
     if update is None:
         if model in BBOX_MODELS:
             filtro['metadata.predictions.bbox'] = {'$exists': False}
+            filtro['metadata.predictions'] = {'$ne': []}
         else:
             filtro['metadata.predictions.' + model] = {'$exists': False}
     else:
