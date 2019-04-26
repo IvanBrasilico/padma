@@ -216,7 +216,7 @@ class SSDMobileModel():
         for ind, (scores, image) in enumerate(zip(output_dict['detection_scores'], original_images)):
             for ind2, score in enumerate(scores):
                 if score > .8:
-                    xfinal, yfinal = image.size
+                    yfinal, xfinal = image.size
                     bbox = [0., 0., 0., 0.]
                     bbox[0] = int(output_dict['detection_boxes'][ind][ind2][0] * yfinal)
                     bbox[2] = int(output_dict['detection_boxes'][ind][ind2][2] * yfinal)
