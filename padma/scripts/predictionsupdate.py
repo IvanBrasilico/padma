@@ -34,14 +34,16 @@ Args:
 
 """
 import datetime
-import json
 import time
+import sys
 
 import click
 import numpy as np
-from ajna_commons.utils.images import generate_batch
 from bson.objectid import ObjectId
 
+
+sys.path.insert(0, '/home/ivan/ajna/padma')
+from ajna_commons.utils.images import generate_batch
 from padma.db import mongodb as db
 from padma.models.encoder.encoder import SIZE, EncoderModel
 from padma.models.peso.peso2 import N_BINS, PesoModel2
