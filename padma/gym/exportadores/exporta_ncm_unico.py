@@ -67,4 +67,4 @@ def exportaimagens(limit, limitportipo):
 
 
 if __name__ == '__main__':
-    save_imagens_ncm_unico()
+    exportaimagens()
