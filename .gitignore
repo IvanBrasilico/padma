@@ -147,3 +147,4 @@ vazio/
 *.pickle
 
 .idea/*
+/ajna_commons/*

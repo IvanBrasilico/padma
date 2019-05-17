@@ -34,7 +34,6 @@ Args:
 
 """
 import datetime
-import json
 import time
 
 import click
@@ -43,9 +42,9 @@ from ajna_commons.utils.images import generate_batch
 from bson.objectid import ObjectId
 
 from padma.db import mongodb as db
-from padma.models.encoder.encoder import SIZE, EncoderModel
-from padma.models.peso.peso2 import N_BINS, PesoModel2
 from padma.models.conteiner20e40.bbox import SSDMobileModel
+from padma.models.encoder.encoder import EncoderModel
+from padma.models.peso.peso2 import PesoModel2
 from padma.models.vazios.vazio2 import VazioSVMModel
 
 BBOX_MODELS = ['ssd']
@@ -64,6 +63,7 @@ def monta_filtro(model: str, limit: int,
     if update is None:
         if model in BBOX_MODELS:
             filtro['metadata.predictions.bbox'] = {'$exists': False}
+            filtro['metadata.predictions'] = {'$ne': []}
         else:
             filtro['metadata.predictions.' + model] = {'$exists': False}
     else:
@@ -148,6 +148,7 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
     original_images = []
     s = time.time()
     total = 0
+    turns = 0
     for batch, rows in batch_gen:
         if len(batch) == 0:
             break
@@ -181,6 +182,7 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
             for i, bboxes in preds.items():
                 index_row = rows[i]
                 _id = index_row['_id']
+                print(index_row)
                 # print(bboxes)
                 update_state = db.fs.files.update_one(
                     {'_id': ObjectId(_id)},
@@ -199,7 +201,8 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
                     new_list = ystack[i, :].tolist()
                 # print(new_list)
                 index_row = rows[i]
-                # print(index_row)
+                print(index_row)
+
                 _id = index_row['_id']
                 old_predictions = index_row['metadata']['predictions']
                 # print(old_predictions)
@@ -215,6 +218,9 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
                 total = total + update_state.modified_count
         s3 = time.time()
         print('Atualizou banco em %s' % (s3 - s2))
+        turns += 1
+        print('Total imagens %s. Batchs processados: %s'
+              % (total, turns))
     s4 = time.time()
     elapsed = s4 - s
     tempo_imagem = 0 if (total == 0) else (elapsed / total)
