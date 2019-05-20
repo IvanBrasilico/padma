@@ -25,7 +25,7 @@ def save_imagens(db,
                  path,
                  vazio=False,
                  limit=200):
-    cursor = get_cursor_filtrado(db, limit=limit)
+    cursor = get_cursor_filtrado(db, vazio=vazio, limit=limit)
     try:
         os.mkdir(path)
     except FileExistsError:
