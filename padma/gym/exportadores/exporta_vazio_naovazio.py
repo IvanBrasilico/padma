@@ -13,6 +13,7 @@ def get_cursor_filtrado(db,
                         vazio=False, limit=None):
     filtro = ENCONTRADOS
     filtro['metadata.carga.vazio'] = vazio
+    filtro['metadata.predictions.vazio'] = vazio
     print(filtro)
     cursor = db['fs.files'].find(filtro)
     if limit:
