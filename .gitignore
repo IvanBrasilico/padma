@@ -145,6 +145,5 @@ vazio/
 *.npy
 *.h5
 *.pickle
-
 .idea/*
 /ajna_commons/*
