@@ -52,7 +52,8 @@ PROJECTION = ['metadata.predictions']  # Economia de I/O
 
 
 def monta_filtro(model: str, limit: int,
-                 update: str) -> dict:
+                 update: str,
+                 pulaerros=False) -> dict:
     """Retorna filtro para MongoDB."""
     filtro = {'metadata.contentType': 'image/jpeg'}
     # Modelo que cria uma caixa de coordenadas para recorte é pré requisito
@@ -75,6 +76,8 @@ def monta_filtro(model: str, limit: int,
         print(dt_inicio)
         filtro['metadata.dataescaneamento'] = {'$gt': dt_inicio}
 
+    if pulaerros:
+        filtro['metadata.predictions'] = {'$ne': []}
     return filtro
 
 
@@ -132,7 +135,7 @@ def predictions_update(modelo, campo, limit, batch_size, update_date):
             campo = 'bbox'
         else:
             campo = modelo
-    filtro = monta_filtro(campo, limit, update_date)
+    filtro = monta_filtro(campo, limit, update_date, pulaerros=True)
     if not filtro:
         return False
     encontrados = db['fs.files'].count_documents(filtro)

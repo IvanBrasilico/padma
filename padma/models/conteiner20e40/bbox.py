@@ -7,6 +7,9 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
+# TODO: Testar Pillow-SIMD para resize de imagens (pelo menos 3x mais rápido)
+
+
 # É preciso clonar o repositório models do tensorflow no raiz do padma
 # para utilizá-lo https://github.com/IvanBrasilico/models.git
 sys.path.append('./models/research')
