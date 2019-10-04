@@ -28,6 +28,7 @@ from ajna_commons.flask.conf import (PADMA_REDIS,
                                      SECRET, redisdb)
 from ajna_commons.flask.log import logger
 from ajna_commons.utils.images import recorta_imagem
+from ajna_commons.flask.user import DBUser
 
 from padma.conf import CLIENT_SLEEP, CLIENT_TIMEOUT, MODEL_DIRECTORY
 
@@ -52,7 +53,7 @@ def configure_app(mongodb):
     app.config['SECRET_KEY'] = SECRET
     app.config['SESSION_TYPE'] = 'filesystem'
     login_ajna.configure(app)
-    login_ajna.DBUser.dbsession = mongodb
+    DBUser.dbsession = mongodb
     app.config['mongodb'] = mongodb
     return app
 
