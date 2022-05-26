@@ -31,7 +31,7 @@ setup(
         'scipy',
         'scikit-image',
         'scikit-learn==0.19.1',
-        'tensorflow==1.5.0',
+        'tensorflow==2.7.2',
     ],
     dependency_links=[
         'git+https://github.com/broadinstitute/keras-resnet',
